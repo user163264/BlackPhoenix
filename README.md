@@ -1,6 +1,6 @@
 # BlackPhoenix Red Team Toolkit
 
-A sophisticated workbench for red teaming language models.
+A sophisticated workbench for red teaming language models. Work in progress.
 
 ## Overview
 
