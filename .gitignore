@@ -59,3 +59,40 @@ tmp/
 *.rtf
 memory_file_for_next_chat.md
 session_*.md
+
+# Development and debugging files
+Overview.txt
+debug_*.py
+demo_*.py
+diagnose_*.py
+simple_diagnostic.py
+
+# Fix and setup scripts
+fix_*.sh
+fix_*.py
+quick_fix_*.sh
+
+# Build and make scripts
+make_*.sh
+
+# Test files
+test_*.py
+test_*.sh
+test_*.md
+
+# Development run scripts
+run_fixed_*.sh
+run_flask_fix.sh
+run_test.sh
+run_security_cleanup.sh
+
+# Development documentation
+*COMPLETION_REPORT*.md
+sys_prompt_*.rtf
+start.rtf
+
+# Integration test scripts
+*integration*.sh
+
+# Fixed/temporary files
+fixed_*.py
