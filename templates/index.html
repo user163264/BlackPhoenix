@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}AI Red Teaming Toolkit{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tool-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+    
+    .tool-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-img-top {
+        height: 160px;
+        object-fit: cover;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: #6c757d;
+    }
+    
+    .featured-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #ffc107;
+        color: #000;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .new-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #28a745;
+        color: #fff;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-dark text-white p-4 mb-4 rounded">
+            <h1>AI Red Teaming Toolkit</h1>
+            <p class="lead">A comprehensive suite of tools for testing and improving the robustness of language models.</p>
+            <hr class="my-4 bg-light">
+            <p>Identify vulnerabilities, test for prompt injection, and develop better safety mechanisms for language models.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="mb-4">Available Tools</h2>
+    </div>
+    
+    <!-- MLCO 2.0 Tool Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card tool-card">
+            <div class="card-img-top bg-primary text-white">
+                <i class="bi bi-translate"></i>
+                <span class="material-icons">translate</span>
+            </div>
+            <span class="new-badge">NEW</span>
+            <div class="card-body">
+                <h5 class="card-title">Multi-lingual Chain Obfuscation Laboratory</h5>
+                <p class="card-text">Enhanced MLCO Lab that obfuscates text by translating it through multiple languages to potentially bypass content filters.</p>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item">Support for 17 languages</li>
+                    <li class="list-group-item">Advanced chain visualization</li>
+                    <li class="list-group-item">Automated analysis of bypass success</li>
+                </ul>
+                <a href="/mlco" class="btn btn-primary">Launch Tool</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Token Obfuscation Tool Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card tool-card">
+            <div class="card-img-top bg-info text-white">
+                <i class="bi bi-shield-lock"></i>
+                <span class="material-icons">vpn_key</span>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Token Obfuscation</h5>
+                <p class="card-text">Test how various text obfuscation techniques can affect model behavior and bypass content filtering.</p>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item">Character replacement</li>
+                    <li class="list-group-item">Encoding techniques</li>
+                    <li class="list-group-item">Token-level manipulation</li>
+                </ul>
+                <a href="/token-obfuscation" class="btn btn-info text-white">Launch Tool</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Basic Multilingual Tool Card - DEACTIVATED -->
+    <!-- <div class="col-md-4 mb-4">
+        <div class="card tool-card">
+            <div class="card-img-top bg-secondary text-white">
+                <i class="bi bi-globe"></i>
+                <span class="material-icons">language</span>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Basic Multilingual Chain</h5>
+                <p class="card-text">Test how translating system and user prompts through other languages affects model responses.</p>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item">System and user prompt translation</li>
+                    <li class="list-group-item">Support for 8 languages</li>
+                    <li class="list-group-item">Comparative response analysis</li>
+                </ul>
+                <a href="/multilingual" class="btn btn-secondary">Launch Tool</a>
+            </div>
+        </div>
+    </div> -->
+    
+    <!-- System Saturation Tool Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card tool-card">
+            <div class="card-img-top bg-danger text-white">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span class="material-icons">warning</span>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">System Saturation</h5>
+                <p class="card-text">Test how saturating system prompts with noise or conflicting instructions affects model behavior.</p>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item">Multiple saturation techniques</li>
+                    <li class="list-group-item">Token limit testing</li>
+                    <li class="list-group-item">Context window manipulation</li>
+                </ul>
+                <a href="/system-saturation" class="btn btn-danger">Launch Tool</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Prompts Tool Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card tool-card">
+            <div class="card-img-top bg-success text-white">
+                <i class="bi bi-file-text"></i>
+                <span class="material-icons">description</span>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">System Prompts Library</h5>
+                <p class="card-text">Browse and use a collection of system prompts for testing and red teaming language models.</p>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item">Ready-to-use system prompts</li>
+                    <li class="list-group-item">Red teaming specific prompts</li>
+                    <li class="list-group-item">Role-based test scenarios</li>
+                </ul>
+                <a href="/system-prompts" class="btn btn-success">Browse Library</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">About the Toolkit</h5>
+            </div>
+            <div class="card-body">
+                <p>This AI Red Teaming Toolkit is designed to help security professionals and researchers test the robustness and safety of large language models. The tools provided here can be used to identify vulnerabilities and develop better safety mechanisms.</p>
+                <p>All tools in this toolkit should be used responsibly and ethically, in accordance with appropriate laws and regulations. These tools are intended for research and security testing purposes only.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any JavaScript specific to the homepage here
+</script>
+{% endblock %}

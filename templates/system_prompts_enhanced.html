@@ -1,0 +1,525 @@
+{% extends "modern_laboratory_base.html" %}
+
+{% set active_page = 'prompts' %}
+
+{% block title %}System Prompts Library - AI Red Teaming Laboratory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .system-prompt-content {
+        white-space: pre-wrap;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.85rem;
+        padding: var(--lab-space-md);
+        border-radius: var(--lab-border-radius);
+        background-color: var(--lab-bg-dark);
+        border-left: 2px solid var(--lab-highlight);
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .prompt-actions {
+        margin-top: var(--lab-space-md);
+        display: flex;
+        gap: var(--lab-space-sm);
+        flex-wrap: wrap;
+    }
+    
+    .prompt-tag {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        background-color: rgba(67, 97, 238, 0.08);
+        color: var(--lab-text-secondary);
+        border-radius: var(--lab-border-radius);
+        font-size: 0.7rem;
+        margin-right: var(--lab-space-xs);
+        font-weight: 500;
+    }
+    
+    .prompt-category-tag {
+        background-color: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
+    
+    .prompt-usage-count {
+        background-color: rgba(168, 85, 247, 0.1);
+        color: #a855f7;
+    }
+    
+    .prompt-empty-state {
+        padding: var(--lab-space-xl) 0;
+        text-align: center;
+    }
+    
+    .prompt-empty-state i {
+        font-size: 3rem;
+        color: var(--lab-text-muted);
+        margin-bottom: var(--lab-space-md);
+    }
+    
+    .search-bar {
+        position: relative;
+        margin-bottom: var(--lab-space-md);
+    }
+    
+    .search-bar .bi-search {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--lab-text-muted);
+    }
+    
+    .search-bar input {
+        padding-left: 2.5rem;
+    }
+    
+    .filter-bar {
+        display: flex;
+        gap: var(--lab-space-sm);
+        margin-bottom: var(--lab-space-md);
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, var(--lab-bg-medium) 0%, rgba(67, 97, 238, 0.05) 100%);
+    }
+    
+    .stats-number {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--lab-highlight);
+    }
+    
+    .edit-actions {
+        display: none;
+        gap: var(--lab-space-xs);
+    }
+    
+    .prompt-card:hover .edit-actions {
+        display: flex;
+    }
+    
+    .prompt-card {
+        transition: all 0.2s ease;
+        margin-bottom: 0;
+    }
+    
+    .prompt-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(67, 97, 238, 0.15);
+    }
+    
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1055;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(67, 97, 238, 0.3);
+        border-top: 3px solid var(--lab-highlight);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .bulk-import-area {
+        border: 2px dashed rgba(67, 97, 238, 0.3);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-lg);
+        text-align: center;
+        margin-bottom: var(--lab-space-md);
+        transition: all 0.2s ease;
+    }
+    
+    .bulk-import-area:hover {
+        border-color: var(--lab-highlight);
+        background: rgba(67, 97, 238, 0.05);
+    }
+    
+    /* List Overview Styles */
+    .overview-container {
+        background: linear-gradient(135deg, var(--lab-bg-medium) 0%, rgba(67, 97, 238, 0.03) 100%);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-lg);
+        margin-bottom: var(--lab-space-lg);
+        border: 1px solid rgba(67, 97, 238, 0.1);
+    }
+    
+    .overview-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border-radius: var(--lab-border-radius);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: var(--lab-bg-dark);
+    }
+    
+    .overview-item {
+        padding: var(--lab-space-sm) var(--lab-space-md);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .overview-item:last-child {
+        border-bottom: none;
+    }
+    
+    .overview-item:hover {
+        background: rgba(67, 97, 238, 0.08);
+        transform: translateX(4px);
+    }
+    
+    .overview-item-name {
+        font-weight: 500;
+        color: var(--lab-text-primary);
+        flex: 1;
+        margin-right: var(--lab-space-sm);
+    }
+    
+    .overview-item-category {
+        background-color: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--lab-border-radius);
+        font-size: 0.7rem;
+        font-weight: 500;
+        margin-right: var(--lab-space-sm);
+    }
+    
+    .overview-item-usage {
+        background-color: rgba(168, 85, 247, 0.15);
+        color: #a855f7;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--lab-border-radius);
+        font-size: 0.7rem;
+        font-weight: 500;
+        min-width: 35px;
+        text-align: center;
+    }
+    
+    .overview-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: var(--lab-space-md);
+    }
+    
+    .overview-search {
+        position: relative;
+        width: 250px;
+    }
+    
+    .overview-search .bi-search {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--lab-text-muted);
+        font-size: 0.8rem;
+    }
+    
+    .overview-search input {
+        padding-left: 2rem;
+        font-size: 0.85rem;
+        height: 32px;
+    }
+    
+    .overview-toggle {
+        color: var(--lab-text-muted);
+        background: none;
+        border: none;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+    
+    .overview-toggle:hover {
+        color: var(--lab-highlight);
+    }
+    
+    .overview-empty {
+        text-align: center;
+        padding: var(--lab-space-lg);
+        color: var(--lab-text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row lab-fade-in">
+    <div class="col-12">
+        <h1 class="lab-title">System Prompts Library</h1>
+        <p class="lab-text-secondary mb-4">Enhanced database-powered collection of system prompts for testing and experimentation</p>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="lab-card stats-card">
+            <div class="lab-card-body text-center">
+                <div class="stats-number" id="totalPrompts">{{ prompts|length }}</div>
+                <div class="lab-text-muted">Total Prompts</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="lab-card stats-card">
+            <div class="lab-card-body text-center">
+                <div class="stats-number" id="totalCategories">{{ categories|length }}</div>
+                <div class="lab-text-muted">Categories</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="lab-card stats-card">
+            <div class="lab-card-body text-center">
+                <div class="stats-number" id="totalUsage">0</div>
+                <div class="lab-text-muted">Total Usage</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="lab-card stats-card">
+            <div class="lab-card-body text-center">
+                <div class="stats-number" id="recentUsage">0</div>
+                <div class="lab-text-muted">Last 30 Days</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Overview Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="overview-container lab-fade-in">
+            <div class="overview-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul me-2"></i>
+                    <span>Quick Overview</span>
+                    <span class="badge bg-secondary ms-2" id="overviewCount">{{ prompts|length }}</span>
+                </h5>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="overview-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="lab-input" id="overviewSearch" placeholder="Quick filter...">
+                    </div>
+                    <button class="overview-toggle" id="overviewToggle" title="Toggle Overview">
+                        <i class="bi bi-chevron-up"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="overview-list" id="overviewList">
+                <div class="overview-empty" id="overviewEmpty">
+                    <i class="bi bi-hourglass-split"></i>
+                    <div class="mt-2">Loading prompts overview...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Prompt Management Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="lab-card">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-database me-2"></i>
+                    <span>Prompt Management</span>
+                </div>
+                <div>
+                    <button class="lab-btn lab-btn-sm lab-btn-outline me-2" data-bs-toggle="modal" data-bs-target="#importModal">
+                        <i class="bi bi-upload lab-btn-icon"></i> Import
+                    </button>
+                    <button class="lab-btn lab-btn-sm lab-btn-primary" data-bs-toggle="modal" data-bs-target="#addPromptModal">
+                        <i class="bi bi-plus-circle lab-btn-icon"></i> Add Prompt
+                    </button>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <!-- Search and Filter Bar -->
+                <div class="search-bar">
+                    <i class="bi bi-search"></i>
+                    <input type="text" class="lab-input" id="searchInput" placeholder="Search prompts by name, content, or tags...">
+                </div>
+                
+                <div class="filter-bar">
+                    <span class="lab-text-muted">Filter by category:</span>
+                    <select class="lab-select" id="categoryFilter" style="width: auto;">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category }}">{{ category.title() }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="lab-btn lab-btn-sm lab-btn-outline" id="clearFilters">
+                        <i class="bi bi-x-circle lab-btn-icon"></i> Clear
+                    </button>
+                </div>
+                
+                <div class="row" id="promptsContainer">
+                    <div class="col-12">
+                        <div class="text-center p-4">
+                            <div class="loading-spinner"></div>
+                            <div class="mt-2">Loading prompts...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Prompt Modal -->
+<div class="modal fade" id="addPromptModal" tabindex="-1" aria-labelledby="addPromptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background-color: var(--lab-bg-medium); color: var(--lab-text-primary);">
+            <div class="modal-header" style="border-color: rgba(255, 255, 255, 0.05);">
+                <h5 class="modal-title" id="addPromptModalLabel">Add New System Prompt</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="promptForm">
+                    <input type="hidden" id="promptId" value="">
+                    <div class="lab-form-group">
+                        <label for="promptName" class="lab-label">Prompt Name</label>
+                        <input type="text" class="lab-input" id="promptName" placeholder="Enter a name for this prompt" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="lab-form-group">
+                                <label for="promptCategory" class="lab-label">Category</label>
+                                <input type="text" class="lab-input" id="promptCategory" placeholder="e.g., general, red_team, claude" value="general">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="lab-form-group">
+                                <label for="promptTags" class="lab-label">Tags (comma-separated)</label>
+                                <input type="text" class="lab-input" id="promptTags" placeholder="e.g., red_team, system, testing">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lab-form-group">
+                        <label for="promptDescription" class="lab-label">Description</label>
+                        <input type="text" class="lab-input" id="promptDescription" placeholder="Brief description of this prompt">
+                    </div>
+                    <div class="lab-form-group">
+                        <label for="promptContent" class="lab-label">Prompt Content</label>
+                        <textarea class="lab-textarea" id="promptContent" rows="12" placeholder="Enter the system prompt content" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-color: rgba(255, 255, 255, 0.05);">
+                <button type="button" class="lab-btn lab-btn-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="lab-btn lab-btn-primary" id="savePromptBtn">Save Prompt</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background-color: var(--lab-bg-medium); color: var(--lab-text-primary);">
+            <div class="modal-header" style="border-color: rgba(255, 255, 255, 0.05);">
+                <h5 class="modal-title" id="importModalLabel">Bulk Import Prompts</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="bulk-import-area">
+                    <i class="bi bi-file-earmark-text" style="font-size: 2rem; color: var(--lab-highlight);"></i>
+                    <p class="mt-2 mb-3">Paste your prompts here. Separate multiple prompts with "----------------------------."</p>
+                </div>
+                
+                <form id="importForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="lab-form-group">
+                                <label for="importSourceName" class="lab-label">Source Name</label>
+                                <input type="text" class="lab-input" id="importSourceName" placeholder="e.g., System Prompts Collection" value="Manual Import">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="lab-form-group">
+                                <label for="importCategory" class="lab-label">Category</label>
+                                <input type="text" class="lab-input" id="importCategory" placeholder="e.g., imported" value="imported">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lab-form-group">
+                        <label for="importContent" class="lab-label">Content to Import</label>
+                        <textarea class="lab-textarea" id="importContent" rows="15" placeholder="Paste your prompt content here..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-color: rgba(255, 255, 255, 0.05);">
+                <button type="button" class="lab-btn lab-btn-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="lab-btn lab-btn-primary" id="importBtn">Import Prompts</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background-color: var(--lab-bg-medium); color: var(--lab-text-primary);">
+            <div class="modal-header" style="border-color: rgba(255, 255, 255, 0.05);">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete "<span id="deletePromptName"></span>"?</p>
+                <p class="lab-text-muted">This action can be undone by restoring from the database.</p>
+            </div>
+            <div class="modal-footer" style="border-color: rgba(255, 255, 255, 0.05);">
+                <button type="button" class="lab-btn lab-btn-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="lab-btn lab-btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="text-center">
+        <div class="loading-spinner"></div>
+        <div class="mt-3" id="loadingText">Processing...</div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/diagnostic.js') }}"></script>
+<script src="{{ url_for('static', filename='js/prompt-library.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modal-fallback.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,508 @@
+{% extends "modern_laboratory_base.html" %}
+
+{% set active_page = 'token' %}
+
+{% block title %}Token Obfuscation Generator - AI Red Team Toolkit{% endblock %}
+
+{% block extra_css %}
+<style>
+    .generated-prompt {
+        background-color: var(--lab-bg-dark);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-md);
+        overflow: auto;
+        max-height: 400px;
+        white-space: pre-wrap;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.85rem;
+        color: var(--lab-text-primary);
+        border-left: 2px solid var(--lab-token);
+        position: relative;
+    }
+    .copy-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: var(--lab-token);
+        border: none;
+        border-radius: 4px;
+        color: white;
+        padding: 4px 8px;
+        font-size: 0.7rem;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+    .copy-btn:hover {
+        opacity: 1;
+    }
+    .copy-btn.copied {
+        background: #28a745;
+    }
+    .loading {
+        display: none;
+        text-align: center;
+        margin: var(--lab-space-lg) 0;
+    }
+    .loading-spinner {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid var(--lab-token);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .technique-card {
+        background-color: var(--lab-bg-light);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-md);
+        margin-bottom: var(--lab-space-sm);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .technique-card:hover {
+        border-color: var(--lab-token);
+        transform: translateY(-1px);
+    }
+    .technique-card.selected {
+        border-color: var(--lab-token);
+        background-color: rgba(0, 255, 159, 0.1);
+    }
+    .prompt-output {
+        margin-top: var(--lab-space-lg);
+    }
+    .generation-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+        border-radius: var(--lab-border-radius);
+        background-color: var(--lab-bg-dark);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row lab-fade-in">
+    <div class="col-12">
+        <h1 class="lab-title">
+            <i class="bi bi-code-slash me-2"></i>
+            Token Obfuscation Generator
+        </h1>
+        <p class="lab-text-secondary mb-4">
+            Generate sophisticated prompts with various token obfuscation techniques. 
+            AI-powered variations ready for copy-paste testing in your environment.
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="lab-card module-token">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-cpu me-2"></i>
+                    <span>Prompt Generation Interface</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    This tool uses OpenAI to generate obfuscated prompts for authorized red team research. 
+                    Generated prompts are ready to copy-paste into your testing environment.
+                </div>
+                
+                <form id="generationForm">
+                    <div class="lab-form-group">
+                        <label for="basePrompt" class="lab-label">
+                            Base Prompt to Obfuscate
+                            <span class="lab-text-muted">(The prompt you want to create obfuscated versions of)</span>
+                        </label>
+                        <textarea class="lab-textarea" id="basePrompt" rows="4" 
+                                  placeholder="Enter the base prompt you want to obfuscate for testing..."></textarea>
+                    </div>
+                    
+                    <div class="lab-form-group">
+                        <label for="targetObjective" class="lab-label">
+                            Target Research Objective
+                            <span class="lab-text-muted">(What you're trying to test or bypass)</span>
+                        </label>
+                        <textarea class="lab-textarea" id="targetObjective" rows="2" 
+                                  placeholder="e.g., Testing content filters, system prompt adherence, safety mechanisms..."></textarea>
+                    </div>
+                    
+                    <div class="lab-form-group">
+                        <label class="lab-label">Select Obfuscation Techniques</label>
+                        <div class="row mt-2">
+                            <div class="col-md-6 mb-2">
+                                <div class="technique-card" onclick="toggleTechnique('base64')">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" value="base64" id="base64Check">
+                                        <label class="form-check-label fw-bold" for="base64Check">
+                                            Base64 Encoding
+                                        </label>
+                                        <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                            Encodes text as Base64 to mask content from simple pattern matching
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="technique-card" onclick="toggleTechnique('hex')">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" value="hex" id="hexCheck">
+                                        <label class="form-check-label fw-bold" for="hexCheck">
+                                            Hexadecimal Encoding
+                                        </label>
+                                        <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                            Converts text to hexadecimal representation
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="technique-card" onclick="toggleTechnique('char_swap')">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" value="char_swap" id="charSwapCheck">
+                                        <label class="form-check-label fw-bold" for="charSwapCheck">
+                                            Character Swapping
+                                        </label>
+                                        <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                            Replaces letters with similar-looking numbers and symbols
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="technique-card" onclick="toggleTechnique('homoglyph')">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" value="homoglyph" id="homoglyphCheck">
+                                        <label class="form-check-label fw-bold" for="homoglyphCheck">
+                                            Homoglyph Substitution
+                                        </label>
+                                        <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                            Uses visually identical Unicode characters
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="technique-card" onclick="toggleTechnique('zero_width')">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" value="zero_width" id="zeroWidthCheck">
+                                        <label class="form-check-label fw-bold" for="zeroWidthCheck">
+                                            Zero-Width Insertion
+                                        </label>
+                                        <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                            Inserts invisible characters to break token patterns
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="technique-card" onclick="toggleTechnique('unicode_hex')">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" value="unicode_hex" id="unicodeHexCheck">
+                                        <label class="form-check-label fw-bold" for="unicodeHexCheck">
+                                            Unicode Hex Encoding
+                                        </label>
+                                        <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                            Converts characters to Unicode hex sequences
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lab-form-group">
+                        <label for="creativityLevel" class="lab-label">
+                            AI Creativity Level
+                            <span class="lab-text-muted">(How creative should the AI be in generating variations?)</span>
+                        </label>
+                        <select class="lab-select" id="creativityLevel">
+                            <option value="conservative">Conservative - Basic obfuscation</option>
+                            <option value="moderate" selected>Moderate - Balanced approach</option>
+                            <option value="creative">Creative - Innovative combinations</option>
+                            <option value="experimental">Experimental - Push boundaries</option>
+                        </select>
+                    </div>
+                    
+                    <div class="lab-mt-3">
+                        <button type="submit" class="lab-btn lab-btn-primary">
+                            <i class="bi bi-cpu lab-btn-icon"></i> Generate Obfuscated Prompts
+                        </button>
+                        <button type="button" class="lab-btn lab-btn-secondary ms-2" onclick="generateSamplePrompts()">
+                            <i class="bi bi-lightbulb lab-btn-icon"></i> Generate Sample Prompts
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="loading" id="loadingIndicator">
+                    <div class="loading-spinner"></div>
+                    <p class="lab-mt-2 lab-text-secondary">AI is generating obfuscated prompts...</p>
+                </div>
+                
+                <div id="generatedPromptsSection" class="prompt-output" style="display: none;">
+                    <div class="lab-divider"></div>
+                    <h3 class="lab-subtitle">
+                        <i class="bi bi-collection me-2"></i>
+                        Generated Prompts
+                    </h3>
+                    
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>Ready for Testing:</strong> Copy any of these prompts and paste them into your testing environment.
+                        Each prompt uses different obfuscation techniques to test various bypass scenarios.
+                    </div>
+                    
+                    <div id="promptsContainer"></div>
+                    
+                    <div class="generation-stats" id="generationStats"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row lab-mt-3">
+    <div class="col-12">
+        <div class="lab-card lab-fade-in" style="animation-delay: 0.2s;">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-question-circle me-2"></i>
+                    <span>How to Use Generated Prompts</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>📋 Usage Instructions</h5>
+                        <ol>
+                            <li><strong>Copy Prompts:</strong> Use the copy button on any generated prompt</li>
+                            <li><strong>Paste in Target System:</strong> Insert into your testing environment</li>
+                            <li><strong>Analyze Results:</strong> Compare responses to understand bypass effectiveness</li>
+                            <li><strong>Document Findings:</strong> Record which techniques work for future reference</li>
+                        </ol>
+                        
+                        <h5 class="mt-4">🎯 Best Practices</h5>
+                        <ul>
+                            <li>Test multiple techniques to find the most effective approaches</li>
+                            <li>Combine techniques for more sophisticated attacks</li>
+                            <li>Always use in authorized testing environments only</li>
+                            <li>Document your findings to improve defensive measures</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3" style="background: var(--lab-bg-dark); border-radius: var(--lab-border-radius);">
+                            <h6 class="mb-3">Generation Features</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">AI-Powered:</span>
+                                <span class="fw-bold text-success">✓</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">Copy-Paste Ready:</span>
+                                <span class="fw-bold text-success">✓</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">Multiple Techniques:</span>
+                                <span class="fw-bold">6+</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="lab-text-secondary">Creativity Levels:</span>
+                                <span class="fw-bold">4</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    function toggleTechnique(technique) {
+        const checkbox = document.getElementById(technique + 'Check');
+        const card = checkbox.closest('.technique-card');
+        
+        checkbox.checked = !checkbox.checked;
+        
+        if (checkbox.checked) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    }
+    
+    document.getElementById('generationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const basePrompt = document.getElementById('basePrompt').value;
+        const targetObjective = document.getElementById('targetObjective').value;
+        const creativityLevel = document.getElementById('creativityLevel').value;
+        
+        // Get selected techniques
+        const techniques = [];
+        document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+            techniques.push(checkbox.value);
+        });
+        
+        if (!basePrompt.trim()) {
+            alert('Please enter a base prompt to obfuscate.');
+            return;
+        }
+        
+        if (techniques.length === 0) {
+            alert('Please select at least one obfuscation technique.');
+            return;
+        }
+        
+        await generatePrompts(basePrompt, targetObjective, techniques, creativityLevel);
+    });
+    
+    async function generatePrompts(basePrompt, targetObjective, techniques, creativityLevel) {
+        // Show loading indicator
+        document.getElementById('loadingIndicator').style.display = 'block';
+        document.getElementById('generatedPromptsSection').style.display = 'none';
+        
+        try {
+            // Send request to API
+            const response = await axios.post('/api/token-obfuscation/generate', {
+                base_prompt: basePrompt,
+                target_objective: targetObjective,
+                techniques: techniques,
+                creativity_level: creativityLevel
+            });
+            
+            // Display generated prompts
+            displayGeneratedPrompts(response.data);
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while generating prompts: ' + (error.response?.data?.error || error.message));
+        } finally {
+            // Hide loading indicator
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    }
+    
+    async function generateSamplePrompts() {
+        const samplePrompt = "Write a story about artificial intelligence";
+        const sampleObjective = "Testing creative content generation and safety boundaries";
+        const sampleTechniques = ['base64', 'char_swap', 'homoglyph'];
+        
+        // Check sample techniques
+        sampleTechniques.forEach(tech => {
+            const checkbox = document.getElementById(tech + 'Check');
+            checkbox.checked = true;
+            checkbox.closest('.technique-card').classList.add('selected');
+        });
+        
+        // Fill form
+        document.getElementById('basePrompt').value = samplePrompt;
+        document.getElementById('targetObjective').value = sampleObjective;
+        
+        await generatePrompts(samplePrompt, sampleObjective, sampleTechniques, 'moderate');
+    }
+    
+    function displayGeneratedPrompts(data) {
+        const container = document.getElementById('promptsContainer');
+        const statsContainer = document.getElementById('generationStats');
+        
+        let promptsHtml = '';
+        
+        data.generated_prompts.forEach((prompt, index) => {
+            promptsHtml += `
+                <div class="lab-card mb-3">
+                    <div class="lab-card-header">
+                        <div class="lab-card-header-title">
+                            <i class="bi bi-code me-2"></i>
+                            <span>Variant ${index + 1}: ${prompt.technique_used}</span>
+                        </div>
+                    </div>
+                    <div class="lab-card-body">
+                        <div class="generated-prompt" id="prompt-${index}">
+                            <button class="copy-btn" onclick="copyPrompt(${index})">
+                                <i class="bi bi-copy"></i> Copy
+                            </button>
+                            ${escapeHtml(prompt.obfuscated_prompt)}
+                        </div>
+                        <div class="mt-2">
+                            <small class="lab-text-muted">
+                                <strong>Technique:</strong> ${prompt.technique_description}<br>
+                                <strong>Usage:</strong> ${prompt.usage_instructions}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = promptsHtml;
+        
+        // Display generation stats
+        const stats = data.generation_stats;
+        const statsHtml = `
+            <div class="stat-item">
+                <div class="h5 mb-1">${stats.prompts_generated}</div>
+                <div class="small lab-text-muted">Prompts Generated</div>
+            </div>
+            <div class="stat-item">
+                <div class="h5 mb-1">${stats.techniques_used}</div>
+                <div class="small lab-text-muted">Techniques Applied</div>
+            </div>
+            <div class="stat-item">
+                <div class="h5 mb-1">${stats.ai_creativity_level}</div>
+                <div class="small lab-text-muted">Creativity Level</div>
+            </div>
+            <div class="stat-item">
+                <div class="h5 mb-1">${stats.generation_time}s</div>
+                <div class="small lab-text-muted">Generation Time</div>
+            </div>
+        `;
+        
+        statsContainer.innerHTML = statsHtml;
+        
+        // Show the results section
+        document.getElementById('generatedPromptsSection').style.display = 'block';
+    }
+    
+    function copyPrompt(index) {
+        const promptElement = document.getElementById(`prompt-${index}`);
+        const button = promptElement.querySelector('.copy-btn');
+        const text = promptElement.textContent.replace('Copy', '').trim();
+        
+        navigator.clipboard.writeText(text).then(() => {
+            button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+            button.classList.add('copied');
+            
+            setTimeout(() => {
+                button.innerHTML = '<i class="bi bi-copy"></i> Copy';
+                button.classList.remove('copied');
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy to clipboard. Please select and copy manually.');
+        });
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

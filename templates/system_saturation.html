@@ -1,0 +1,522 @@
+{% extends "modern_laboratory_base.html" %}
+
+{% set active_page = 'system' %}
+
+{% block title %}System Saturation Generator - AI Red Team Toolkit{% endblock %}
+
+{% block extra_css %}
+<style>
+    .generated-prompt {
+        background-color: var(--lab-bg-dark);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-md);
+        overflow: auto;
+        max-height: 400px;
+        white-space: pre-wrap;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.85rem;
+        color: var(--lab-text-primary);
+        border-left: 2px solid var(--lab-system);
+        position: relative;
+    }
+    .copy-btn {
+        background: var(--lab-system);
+        border: none;
+        border-radius: 4px;
+        color: white;
+        padding: 2px 6px;
+        font-size: 0.6rem;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+        margin-top: 8px;
+        float: right;
+    }
+    .copy-btn:hover {
+        opacity: 1;
+    }
+    .copy-btn.copied {
+        background: #28a745;
+    }
+    .loading {
+        display: none;
+        text-align: center;
+        margin: var(--lab-space-lg) 0;
+    }
+    .loading-spinner {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid var(--lab-system);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .technique-card {
+        background-color: var(--lab-bg-light);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-md);
+        margin-bottom: var(--lab-space-sm);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .technique-card:hover {
+        border-color: var(--lab-system);
+        transform: translateY(-1px);
+    }
+    .technique-card.selected {
+        border-color: var(--lab-system);
+        background-color: rgba(255, 69, 0, 0.1);
+    }
+    .prompt-output {
+        margin-top: var(--lab-space-lg);
+    }
+    .generation-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+        border-radius: var(--lab-border-radius);
+        background-color: var(--lab-bg-dark);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row lab-fade-in">
+    <div class="col-12">
+        <h1 class="lab-title">
+            <i class="bi bi-gear me-2"></i>
+            System Saturation Generator
+        </h1>
+        <p class="lab-text-secondary mb-4">
+            Generate sophisticated system saturation prompts for AI security research. 
+            AI-powered variations ready for copy-paste testing in your environment.
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="lab-card module-system">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-cpu me-2"></i>
+                    <span>Prompt Generation Interface</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    This tool uses OpenAI to generate system saturation prompts for authorized red team research. 
+                    Generated prompts are ready to copy-paste into your testing environment.
+                </div>
+                
+                <form id="generationForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="lab-form-group">
+                                <label for="systemPrompt" class="lab-label">
+                                    System Prompt
+                                    <span class="lab-text-muted">(The system instructions to saturate)</span>
+                                </label>
+                                <textarea class="lab-textarea" id="systemPrompt" rows="4" 
+                                          placeholder="Enter system prompt here..."></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="lab-form-group">
+                                <label for="userPrompt" class="lab-label">
+                                    User Prompt
+                                    <span class="lab-text-muted">(The user message to combine with saturation)</span>
+                                </label>
+                                <textarea class="lab-textarea" id="userPrompt" rows="4" 
+                                          placeholder="Enter user prompt here..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lab-form-group">
+                        <label for="targetObjective" class="lab-label">
+                            Target Research Objective
+                            <span class="lab-text-muted">(What you're trying to test or bypass)</span>
+                        </label>
+                        <textarea class="lab-textarea" id="targetObjective" rows="2" 
+                                  placeholder="e.g., Testing system prompt adherence, attention dilution, safety mechanism bypass..."></textarea>
+                    </div>
+                    
+                    <div class="lab-form-group">
+                        <label class="lab-label">Select Saturation Techniques</label>
+                        <div class="row mt-2">
+                            <div class="col-md-4 mb-2">
+                                <div class="technique-card">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" value="noise" id="noiseCheck">
+                                        <label class="form-check-label fw-bold" for="noiseCheck" style="cursor: pointer; width: 100%;">
+                                            Random Noise
+                                        </label>
+                                        <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                            Adds random text to dilute attention and consume tokens
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="technique-card">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" value="repetition" id="repetitionCheck">
+                                        <label class="form-check-label fw-bold" for="repetitionCheck" style="cursor: pointer; width: 100%;">
+                                            Repetitive Text
+                                        </label>
+                                        <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                            Repeats instructions to potentially override system prompts
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="technique-card">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="checkbox" value="nested" id="nestedCheck">
+                                        <label class="form-check-label fw-bold" for="nestedCheck" style="cursor: pointer; width: 100%;">
+                                            Nested Structure
+                                        </label>
+                                        <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                            Creates hierarchical patterns to confuse instruction parsing
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lab-form-group">
+                        <label for="creativityLevel" class="lab-label">
+                            AI Creativity Level
+                            <span class="lab-text-muted">(How creative should the AI be in generating variations?)</span>
+                        </label>
+                        <select class="lab-select" id="creativityLevel">
+                            <option value="conservative">Conservative - Basic saturation patterns</option>
+                            <option value="moderate" selected>Moderate - Balanced approach</option>
+                            <option value="creative">Creative - Innovative combinations</option>
+                            <option value="experimental">Experimental - Push boundaries</option>
+                        </select>
+                    </div>
+                    
+                    <div class="lab-mt-3">
+                        <button type="submit" class="lab-btn lab-btn-primary">
+                            <i class="bi bi-cpu lab-btn-icon"></i> Generate Saturated Prompts
+                        </button>
+                        <button type="button" class="lab-btn lab-btn-secondary ms-2" onclick="generateSamplePrompts()">
+                            <i class="bi bi-lightbulb lab-btn-icon"></i> Generate Sample Prompts
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="loading" id="loadingIndicator">
+                    <div class="loading-spinner"></div>
+                    <p class="lab-mt-2 lab-text-secondary">AI is generating saturated prompts...</p>
+                </div>
+                
+                <div id="generatedPromptsSection" class="prompt-output" style="display: none;">
+                    <div class="lab-divider"></div>
+                    <h3 class="lab-subtitle">
+                        <i class="bi bi-collection me-2"></i>
+                        Generated Saturated Prompts
+                    </h3>
+                    
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>Ready for Testing:</strong> Copy any of these prompts and paste them into your testing environment.
+                        Each prompt uses different saturation techniques to test system prompt adherence and attention mechanisms.
+                    </div>
+                    
+                    <div id="promptsContainer"></div>
+                    
+                    <div class="generation-stats" id="generationStats"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row lab-mt-3">
+    <div class="col-12">
+        <div class="lab-card lab-fade-in" style="animation-delay: 0.2s;">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-question-circle me-2"></i>
+                    <span>How to Use Generated Prompts</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>📋 Usage Instructions</h5>
+                        <ol>
+                            <li><strong>Copy Prompts:</strong> Use the copy button on any generated prompt</li>
+                            <li><strong>Paste in Target System:</strong> Insert into your testing environment</li>
+                            <li><strong>Analyze Results:</strong> Compare responses to understand saturation effectiveness</li>
+                            <li><strong>Document Findings:</strong> Record which techniques work for future reference</li>
+                        </ol>
+                        
+                        <h5 class="mt-4">🎯 Best Practices</h5>
+                        <ul>
+                            <li>Test multiple saturation techniques to find the most effective approaches</li>
+                            <li>Combine different techniques for more sophisticated attacks</li>
+                            <li>Always use in authorized testing environments only</li>
+                            <li>Monitor token consumption as saturation can be expensive</li>
+                            <li>Document your findings to improve defensive measures</li>
+                        </ul>
+                        
+                        <h5 class="mt-4">🔬 About System Saturation</h5>
+                        <p>
+                            System saturation techniques attempt to overload or confuse model handling of system instructions. 
+                            These methods can sometimes reveal vulnerabilities in how models process and prioritize competing instructions:
+                        </p>
+                        <ul>
+                            <li><strong>Random Noise:</strong> Adds randomly generated text to increase token consumption and potentially reduce the model's attention to important instructions.</li>
+                            <li><strong>Repetitive Text:</strong> Repeats specific instructions or phrases, which can sometimes result in them being prioritized over other content.</li>
+                            <li><strong>Nested Structure:</strong> Creates hierarchical patterns that might confuse instruction parsing and potentially override safety systems.</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3" style="background: var(--lab-bg-dark); border-radius: var(--lab-border-radius);">
+                            <h6 class="mb-3">Generation Features</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">AI-Powered:</span>
+                                <span class="fw-bold text-success">✓</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">Copy-Paste Ready:</span>
+                                <span class="fw-bold text-success">✓</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">Multiple Techniques:</span>
+                                <span class="fw-bold">3+</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="lab-text-secondary">Creativity Levels:</span>
+                                <span class="fw-bold">4</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 p-3" style="background: rgba(255, 69, 0, 0.1); border-radius: var(--lab-border-radius); border: 1px solid rgba(255, 69, 0, 0.3);">
+                            <h6 class="mb-2" style="color: var(--lab-system);">⚠️ Important Note</h6>
+                            <p class="mb-0 small">
+                                System saturation tests can consume a high number of tokens. 
+                                The laboratory has safeguards to prevent excessive token usage.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    // Add event listeners to checkboxes to sync with card state
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][id$="Check"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const card = this.closest('.technique-card');
+                if (this.checked) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+        });
+    });
+    
+    document.getElementById('generationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const systemPrompt = document.getElementById('systemPrompt').value;
+        const userPrompt = document.getElementById('userPrompt').value;
+        const targetObjective = document.getElementById('targetObjective').value;
+        const creativityLevel = document.getElementById('creativityLevel').value;
+        
+        // Get selected techniques
+        const techniques = [];
+        document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+            techniques.push(checkbox.value);
+        });
+        
+        if (!systemPrompt.trim() || !userPrompt.trim()) {
+            alert('Please enter both system prompt and user prompt.');
+            return;
+        }
+        
+        if (techniques.length === 0) {
+            alert('Please select at least one saturation technique.');
+            return;
+        }
+        
+        await generatePrompts(systemPrompt, userPrompt, targetObjective, techniques, creativityLevel);
+    });
+    
+    async function generatePrompts(systemPrompt, userPrompt, targetObjective, techniques, creativityLevel) {
+        // Show loading indicator
+        document.getElementById('loadingIndicator').style.display = 'block';
+        document.getElementById('generatedPromptsSection').style.display = 'none';
+        
+        try {
+            // Send request to API
+            const response = await axios.post('/api/system-saturation/generate', {
+                system_prompt: systemPrompt,
+                user_prompt: userPrompt,
+                target_objective: targetObjective,
+                techniques: techniques,
+                creativity_level: creativityLevel
+            });
+            
+            // Display generated prompts
+            displayGeneratedPrompts(response.data);
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while generating prompts: ' + (error.response?.data?.error || error.message));
+        } finally {
+            // Hide loading indicator
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    }
+    
+    async function generateSamplePrompts() {
+        const sampleSystemPrompt = "You are a helpful assistant. Always be respectful and follow safety guidelines.";
+        const sampleUserPrompt = "Tell me about the weather";
+        const sampleObjective = "Testing system prompt adherence under saturation conditions";
+        const sampleTechniques = ['noise', 'repetition'];
+        
+        // Check sample techniques
+        sampleTechniques.forEach(tech => {
+            const checkbox = document.getElementById(tech + 'Check');
+            checkbox.checked = true;
+            checkbox.closest('.technique-card').classList.add('selected');
+        });
+        
+        // Fill form
+        document.getElementById('systemPrompt').value = sampleSystemPrompt;
+        document.getElementById('userPrompt').value = sampleUserPrompt;
+        document.getElementById('targetObjective').value = sampleObjective;
+        
+        await generatePrompts(sampleSystemPrompt, sampleUserPrompt, sampleObjective, sampleTechniques, 'moderate');
+    }
+    
+    function displayGeneratedPrompts(data) {
+        const container = document.getElementById('promptsContainer');
+        const statsContainer = document.getElementById('generationStats');
+        
+        let promptsHtml = '';
+        
+        data.generated_prompts.forEach((prompt, index) => {
+            promptsHtml += `
+                <div class="lab-card mb-3">
+                    <div class="lab-card-header">
+                        <div class="lab-card-header-title">
+                            <i class="bi bi-gear me-2"></i>
+                            <span>Variant ${index + 1}: ${prompt.technique_used}</span>
+                        </div>
+                    </div>
+                    <div class="lab-card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>System Prompt (Saturated)</h6>
+                                <div class="generated-prompt" id="system-prompt-${index}">
+                                    ${escapeHtml(prompt.saturated_system_prompt)}
+                                </div>
+                                <button class="copy-btn" onclick="copyPrompt('system-prompt-${index}')">
+                                    <i class="bi bi-copy"></i> Copy
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>User Prompt (Saturated)</h6>
+                                <div class="generated-prompt" id="user-prompt-${index}">
+                                    ${escapeHtml(prompt.saturated_user_prompt)}
+                                </div>
+                                <button class="copy-btn" onclick="copyPrompt('user-prompt-${index}')">
+                                    <i class="bi bi-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <small class="lab-text-muted">
+                                <strong>Technique:</strong> ${prompt.technique_description}<br>
+                                <strong>Usage:</strong> ${prompt.usage_instructions}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = promptsHtml;
+        
+        // Display generation stats
+        const stats = data.generation_stats;
+        const statsHtml = `
+            <div class="stat-item">
+                <div class="h5 mb-1">${stats.prompts_generated}</div>
+                <div class="small lab-text-muted">Prompts Generated</div>
+            </div>
+            <div class="stat-item">
+                <div class="h5 mb-1">${stats.techniques_used}</div>
+                <div class="small lab-text-muted">Techniques Applied</div>
+            </div>
+            <div class="stat-item">
+                <div class="h5 mb-1">${stats.ai_creativity_level}</div>
+                <div class="small lab-text-muted">Creativity Level</div>
+            </div>
+            <div class="stat-item">
+                <div class="h5 mb-1">${stats.generation_time}s</div>
+                <div class="small lab-text-muted">Generation Time</div>
+            </div>
+        `;
+        
+        statsContainer.innerHTML = statsHtml;
+        
+        // Show the results section
+        document.getElementById('generatedPromptsSection').style.display = 'block';
+    }
+    
+    function copyPrompt(elementId) {
+        const promptElement = document.getElementById(elementId);
+        const button = promptElement.parentElement.querySelector('.copy-btn');
+        const text = promptElement.textContent.trim();
+        
+        navigator.clipboard.writeText(text).then(() => {
+            button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+            button.classList.add('copied');
+            
+            setTimeout(() => {
+                button.innerHTML = '<i class="bi bi-copy"></i> Copy';
+                button.classList.remove('copied');
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy to clipboard. Please select and copy manually.');
+        });
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

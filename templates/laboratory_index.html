@@ -1,0 +1,279 @@
+{% extends "laboratory_base.html" %}
+
+{% set active_page = 'dashboard' %}
+
+{% block title %}Prompt Engineering Laboratory{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="lab-title">Prompt Engineering Laboratory</h1>
+        <p class="text-muted mb-4">A sophisticated workbench for red teaming language models</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Laboratory modules section -->
+    <div class="col-md-8 mb-4">
+        <div class="lab-card">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <span class="indicator active"></span>
+                    <span>Laboratory Modules</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <div class="row">
+                    <!-- MLCO Module -->
+                    <div class="col-md-6 mb-4">
+                        <div class="lab-card module-mlco" style="margin-bottom: 0;">
+                            <div class="lab-card-header">
+                                <div class="lab-card-header-title">
+                                    <i class="bi bi-translate me-2"></i>
+                                    <span>MLCO Lab</span>
+                                </div>
+                            </div>
+                            <div class="lab-card-body">
+                                <p>Multi-lingual Chain Obfuscation technique that transforms prompts through multiple language translations.</p>
+                                <div class="lab-tag">language transformation</div>
+                                <div class="lab-tag">semantic drift</div>
+                            </div>
+                            <div class="lab-card-footer">
+                                <a href="/mlco" class="lab-btn lab-btn-outline lab-btn-sm">
+                                    <i class="bi bi-arrow-right lab-btn-icon"></i> Open Module
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Token Manipulation -->
+                    <div class="col-md-6 mb-4">
+                        <div class="lab-card module-token" style="margin-bottom: 0;">
+                            <div class="lab-card-header">
+                                <div class="lab-card-header-title">
+                                    <i class="bi bi-shuffle me-2"></i>
+                                    <span>Token Manipulation</span>
+                                </div>
+                            </div>
+                            <div class="lab-card-body">
+                                <p>Advanced techniques for token-level obfuscation, including character substitution and encoding variants.</p>
+                                <div class="lab-tag">character substitution</div>
+                                <div class="lab-tag">encodings</div>
+                            </div>
+                            <div class="lab-card-footer">
+                                <a href="/token-obfuscation" class="lab-btn lab-btn-outline lab-btn-sm">
+                                    <i class="bi bi-arrow-right lab-btn-icon"></i> Open Module
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Engineering -->
+                    <div class="col-md-6 mb-4">
+                        <div class="lab-card module-system" style="margin-bottom: 0;">
+                            <div class="lab-card-header">
+                                <div class="lab-card-header-title">
+                                    <i class="bi bi-gear me-2"></i>
+                                    <span>System Engineering</span>
+                                </div>
+                            </div>
+                            <div class="lab-card-body">
+                                <p>Tools for crafting system prompts that exploit vulnerabilities in prompt handling and instruction following.</p>
+                                <div class="lab-tag">system instructions</div>
+                                <div class="lab-tag">injection</div>
+                            </div>
+                            <div class="lab-card-footer">
+                                <a href="/system-saturation" class="lab-btn lab-btn-outline lab-btn-sm">
+                                    <i class="bi bi-arrow-right lab-btn-icon"></i> Open Module
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Prompt Library -->
+                    <div class="col-md-6 mb-4">
+                        <div class="lab-card" style="margin-bottom: 0;">
+                            <div class="lab-card-header">
+                                <div class="lab-card-header-title">
+                                    <i class="bi bi-database me-2"></i>
+                                    <span>Prompt Library</span>
+                                </div>
+                            </div>
+                            <div class="lab-card-body">
+                                <p>Collection of system prompts for testing and experimentation, including known vulnerable configurations.</p>
+                                <div class="lab-tag">system prompts</div>
+                                <div class="lab-tag">reference</div>
+                            </div>
+                            <div class="lab-card-footer">
+                                <a href="/system-prompts" class="lab-btn lab-btn-outline lab-btn-sm">
+                                    <i class="bi bi-arrow-right lab-btn-icon"></i> Open Module
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lab-divider"></div>
+                
+                <div class="lab-text-center lab-mb-2">
+                    <span class="lab-text-muted">Coming Soon</span>
+                </div>
+                
+                <div class="row">
+                    <!-- Cognitive Bias Module -->
+                    <div class="col-md-6 mb-4">
+                        <div class="lab-card module-cognitive" style="margin-bottom: 0; opacity: 0.7;">
+                            <div class="lab-card-header">
+                                <div class="lab-card-header-title">
+                                    <i class="bi bi-braces me-2"></i>
+                                    <span>Cognitive Bias Lab</span>
+                                </div>
+                            </div>
+                            <div class="lab-card-body">
+                                <p>Techniques that exploit cognitive biases and decision-making patterns in language models.</p>
+                                <div class="lab-tag">anchoring</div>
+                                <div class="lab-tag">authority patterns</div>
+                            </div>
+                            <div class="lab-card-footer">
+                                <button class="lab-btn lab-btn-outline lab-btn-sm" disabled>
+                                    <i class="bi bi-clock lab-btn-icon"></i> Coming Soon
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pipeline Builder -->
+                    <div class="col-md-6 mb-4">
+                        <div class="lab-card" style="margin-bottom: 0; opacity: 0.7;">
+                            <div class="lab-card-header">
+                                <div class="lab-card-header-title">
+                                    <i class="bi bi-diagram-3 me-2"></i>
+                                    <span>Technique Pipeline</span>
+                                </div>
+                            </div>
+                            <div class="lab-card-body">
+                                <p>Visual workflow builder for chaining multiple techniques into sophisticated transformation pipelines.</p>
+                                <div class="lab-tag">workflow</div>
+                                <div class="lab-tag">multi-technique</div>
+                            </div>
+                            <div class="lab-card-footer">
+                                <button class="lab-btn lab-btn-outline lab-btn-sm" disabled>
+                                    <i class="bi bi-clock lab-btn-icon"></i> Coming Soon
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right sidebar -->
+    <div class="col-md-4">
+        <!-- Quick actions panel -->
+        <div class="lab-card mb-4">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <span class="indicator active"></span>
+                    <span>Quick Actions</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <div class="lab-mb-2">
+                    <button class="lab-btn lab-btn-secondary lab-w-100 lab-mb-2">
+                        <i class="bi bi-plus-circle lab-btn-icon"></i> New Experiment
+                    </button>
+                    <button class="lab-btn lab-btn-outline lab-w-100 lab-mb-2">
+                        <i class="bi bi-file-earmark-arrow-up lab-btn-icon"></i> Import Prompt
+                    </button>
+                    <button class="lab-btn lab-btn-outline lab-w-100">
+                        <i class="bi bi-archive lab-btn-icon"></i> View Results Archive
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API Status -->
+        <div class="lab-card mb-4">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <span class="indicator active"></span>
+                    <span>API Status</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <div class="lab-d-flex lab-align-center lab-justify-between lab-mb-2">
+                    <span>Connection:</span>
+                    <span class="lab-status lab-status-success">
+                        <span class="lab-status-dot"></span>
+                        <span>Connected</span>
+                    </span>
+                </div>
+                <div class="lab-d-flex lab-align-center lab-justify-between lab-mb-2">
+                    <span>Model:</span>
+                    <span>GPT-4o</span>
+                </div>
+                <div class="lab-d-flex lab-align-center lab-justify-between lab-mb-2">
+                    <span>Rate Limit:</span>
+                    <span>3 RPM</span>
+                </div>
+                <div class="lab-d-flex lab-align-center lab-justify-between">
+                    <span>Token Balance:</span>
+                    <span>∞ / ∞</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Experiments -->
+        <div class="lab-card">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <span class="indicator"></span>
+                    <span>Recent Experiments</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <div class="lab-text-muted text-center py-3">
+                    <i class="bi bi-hourglass me-2"></i> No recent experiments
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="lab-card">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <span class="indicator active"></span>
+                    <span>About this Laboratory</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <p>
+                    The <strong>Prompt Engineering Laboratory</strong> is a sophisticated workbench for red teaming language models. 
+                    This environment allows researchers and security professionals to develop, test, and document sophisticated red teaming 
+                    techniques with unprecedented precision and insight.
+                </p>
+                
+                <p>
+                    Our laboratory transforms red teaming from ad-hoc experimentation to a systematic, scientific process. It combines 
+                    the creative aspects of prompt engineering with the methodical approach of a research laboratory, enabling you to:
+                </p>
+                
+                <ul>
+                    <li><strong>Generate diverse adversarial prompts</strong> using multiple techniques</li>
+                    <li><strong>Track and analyze transformation processes</strong> with detailed visualizations</li>
+                    <li><strong>Document findings and patterns</strong> for scientific analysis</li>
+                    <li><strong>Build a knowledge base</strong> of effective techniques</li>
+                </ul>
+                
+                <div class="lab-text-muted">
+                    <strong>Note:</strong> This laboratory generates prompts for external testing against different models. It does not directly test against API models.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

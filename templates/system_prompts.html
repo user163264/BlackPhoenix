@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}System Prompts - AI Red Teaming Toolkit{% endblock %}
+
+{% block extra_css %}
+<style>
+    .system-prompt-card {
+        margin-bottom: 20px;
+    }
+    .system-prompt-content {
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 0.9rem;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h2 class="mb-0">System Prompts Library</h2>
+            </div>
+            <div class="card-body">
+                <p>This section contains various system prompts that you can use in red teaming experiments. You can copy these prompts and use them with the other tools in the toolkit.</p>
+                
+                <div class="row mt-4">
+                    {% if prompts %}
+                        {% for prompt in prompts %}
+                            <div class="col-md-6">
+                                <div class="card system-prompt-card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">{{ prompt.name }}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="system-prompt-content">{{ prompt.content }}</div>
+                                        <div class="mt-3">
+                                            <button class="btn btn-sm btn-primary copy-prompt" data-prompt-id="{{ loop.index }}">Copy Prompt</button>
+                                            <a href="#" class="btn btn-sm btn-success test-prompt" data-prompt-id="{{ loop.index }}">Test with Token Obfuscation</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                No system prompts found. Upload system_prompts_for_sessions.txt or claude_system_prompt.txt to the project root to see prompts here.
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-4">
+                    <h4>Add Custom System Prompt</h4>
+                    <form id="addPromptForm">
+                        <div class="mb-3">
+                            <label for="promptName" class="form-label">Prompt Name</label>
+                            <input type="text" class="form-control" id="promptName" placeholder="Enter a name for this prompt">
+                        </div>
+                        <div class="mb-3">
+                            <label for="promptContent" class="form-label">Prompt Content</label>
+                            <textarea class="form-control" id="promptContent" rows="6" placeholder="Enter the system prompt content"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add to Library</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden storage for prompt contents -->
+<div style="display: none;">
+    {% if prompts %}
+        {% for prompt in prompts %}
+            <div id="prompt-content-{{ loop.index }}">{{ prompt.content }}</div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Copy prompt to clipboard
+    document.querySelectorAll('.copy-prompt').forEach(button => {
+        button.addEventListener('click', function() {
+            const promptId = this.getAttribute('data-prompt-id');
+            const promptContent = document.getElementById(`prompt-content-${promptId}`).textContent;
+            
+            // Create temporary textarea element to copy text
+            const textarea = document.createElement('textarea');
+            textarea.value = promptContent;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            // Visual feedback
+            const originalText = this.textContent;
+            this.textContent = 'Copied!';
+            setTimeout(() => {
+                this.textContent = originalText;
+            }, 2000);
+        });
+    });
+    
+    // Test prompt with Token Obfuscation
+    document.querySelectorAll('.test-prompt').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const promptId = this.getAttribute('data-prompt-id');
+            const promptContent = document.getElementById(`prompt-content-${promptId}`).textContent;
+            
+            // Store in session storage and redirect
+            sessionStorage.setItem('testSystemPrompt', promptContent);
+            window.location.href = '/token-obfuscation';
+        });
+    });
+    
+    // Check if there's a system prompt in session storage when loading token obfuscation page
+    if (window.location.pathname === '/token-obfuscation') {
+        window.addEventListener('DOMContentLoaded', function() {
+            const storedPrompt = sessionStorage.getItem('testSystemPrompt');
+            if (storedPrompt) {
+                document.getElementById('systemPrompt').value = storedPrompt;
+                sessionStorage.removeItem('testSystemPrompt');
+            }
+        });
+    }
+    
+    // Add custom prompt
+    document.getElementById('addPromptForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const promptName = document.getElementById('promptName').value;
+        const promptContent = document.getElementById('promptContent').value;
+        
+        if (!promptName || !promptContent) {
+            alert('Please enter both a name and content for the prompt.');
+            return;
+        }
+        
+        // In a full implementation, this would send the data to the server to save
+        // For this demo version, we'll just add it to the page temporarily
+        
+        const col = document.createElement('div');
+        col.className = 'col-md-6';
+        
+        const newId = document.querySelectorAll('.system-prompt-card').length + 1;
+        
+        col.innerHTML = `
+            <div class="card system-prompt-card">
+                <div class="card-header">
+                    <h5 class="mb-0">${promptName}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="system-prompt-content">${promptContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-primary copy-prompt" data-prompt-id="${newId}">Copy Prompt</button>
+                        <a href="#" class="btn btn-sm btn-success test-prompt" data-prompt-id="${newId}">Test with Token Obfuscation</a>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add hidden storage for prompt content
+        const hiddenStorage = document.createElement('div');
+        hiddenStorage.id = `prompt-content-${newId}`;
+        hiddenStorage.style.display = 'none';
+        hiddenStorage.textContent = promptContent;
+        document.body.appendChild(hiddenStorage);
+        
+        // Add the new prompt card to the page
+        document.querySelector('.row.mt-4').appendChild(col);
+        
+        // Add event listeners to the new buttons
+        col.querySelector('.copy-prompt').addEventListener('click', function() {
+            const promptId = this.getAttribute('data-prompt-id');
+            const content = document.getElementById(`prompt-content-${promptId}`).textContent;
+            
+            const textarea = document.createElement('textarea');
+            textarea.value = content;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            const originalText = this.textContent;
+            this.textContent = 'Copied!';
+            setTimeout(() => {
+                this.textContent = originalText;
+            }, 2000);
+        });
+        
+        col.querySelector('.test-prompt').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const promptId = this.getAttribute('data-prompt-id');
+            const content = document.getElementById(`prompt-content-${promptId}`).textContent;
+            
+            sessionStorage.setItem('testSystemPrompt', content);
+            window.location.href = '/token-obfuscation';
+        });
+        
+        // Clear the form
+        document.getElementById('promptName').value = '';
+        document.getElementById('promptContent').value = '';
+        
+        alert('Custom prompt added to library!');
+    });
+</script>
+{% endblock %}

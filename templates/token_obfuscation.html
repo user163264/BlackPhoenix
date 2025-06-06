@@ -1,0 +1,545 @@
+{% extends "modern_laboratory_base.html" %}
+
+{% set active_page = 'token' %}
+
+{% block title %}Token Obfuscation - AI Red Teaming Laboratory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .json-display {
+        background-color: var(--lab-bg-dark);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-md);
+        overflow: auto;
+        max-height: 400px;
+        white-space: pre-wrap;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.85rem;
+        color: var(--lab-text-primary);
+        border-left: 2px solid var(--lab-token);
+    }
+    .loading {
+        display: none;
+        text-align: center;
+        margin: var(--lab-space-lg) 0;
+    }
+    .loading-spinner {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid var(--lab-token);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .test-card {
+        background-color: var(--lab-bg-light);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-md);
+        margin-bottom: var(--lab-space-md);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .test-success {
+        border-left: 4px solid #28a745;
+    }
+    .test-failed {
+        border-left: 4px solid #dc3545;
+    }
+    .performance-chart {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    .performance-item {
+        padding: 1rem;
+        border-radius: var(--lab-border-radius);
+        background-color: var(--lab-bg-dark);
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row lab-fade-in">
+    <div class="col-12">
+        <h1 class="lab-title">Token Manipulation Lab</h1>
+        <p class="lab-text-secondary mb-4">Test how various token obfuscation techniques affect model behavior and safety mechanisms</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="lab-card module-token">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-shuffle me-2"></i>
+                    <span>Token Obfuscation Testing</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <p>This module lets you test how different token obfuscation techniques affect model responses and safety mechanisms. You can apply various transformations to system prompts and user inputs to analyze bypass patterns.</p>
+                
+                <form id="obfuscationForm">
+                    <div class="lab-form-group">
+                        <label for="systemPrompt" class="lab-label">System Prompt</label>
+                        <textarea class="lab-textarea" id="systemPrompt" rows="4" placeholder="Enter system prompt here..."></textarea>
+                    </div>
+                    <div class="lab-form-group">
+                        <label for="userPrompt" class="lab-label">User Prompt</label>
+                        <textarea class="lab-textarea" id="userPrompt" rows="4" placeholder="Enter user prompt here..."></textarea>
+                    </div>
+                    
+                    <div class="lab-form-group">
+                        <label class="lab-label">Obfuscation Techniques</label>
+                        <div class="row mt-2">
+                            <div class="col-md-6 mb-2">
+                                <div class="lab-card" style="margin-bottom: 0;">
+                                    <div class="lab-card-body p-3">
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input" type="checkbox" value="base64" id="base64Check">
+                                            <label class="form-check-label" for="base64Check">
+                                                Base64 Encoding
+                                            </label>
+                                            <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                                Encodes text as Base64 to mask content
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="lab-card" style="margin-bottom: 0;">
+                                    <div class="lab-card-body p-3">
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input" type="checkbox" value="char_swap" id="charSwapCheck">
+                                            <label class="form-check-label" for="charSwapCheck">
+                                                Character Swapping
+                                            </label>
+                                            <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                                Replaces letters with similar-looking numbers (a→4, e→3)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="lab-card" style="margin-bottom: 0;">
+                                    <div class="lab-card-body p-3">
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input" type="checkbox" value="homoglyph" id="homoglyphCheck">
+                                            <label class="form-check-label" for="homoglyphCheck">
+                                                Homoglyph Substitution
+                                            </label>
+                                            <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                                Uses similar-looking Unicode characters
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="lab-card" style="margin-bottom: 0;">
+                                    <div class="lab-card-body p-3">
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input" type="checkbox" value="zero_width" id="zeroWidthCheck">
+                                            <label class="form-check-label" for="zeroWidthCheck">
+                                                Zero-Width Space Insertion
+                                            </label>
+                                            <div class="lab-text-muted" style="font-size: 0.8rem; margin-left: 1.5rem;">
+                                                Inserts invisible characters between tokens
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lab-mt-3">
+                        <button type="submit" class="lab-btn lab-btn-primary">
+                            <i class="bi bi-play-fill lab-btn-icon"></i> Test Obfuscation
+                        </button>
+                        <button type="button" class="lab-btn lab-btn-secondary ms-2" onclick="runSelfTests()">
+                            <i class="bi bi-check-circle lab-btn-icon"></i> Run Self Tests
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="loading" id="loadingIndicator">
+                    <div class="loading-spinner"></div>
+                    <p class="lab-mt-2 lab-text-secondary">Testing obfuscation techniques...</p>
+                </div>
+                
+                <div id="resultsSection" style="display: none;" class="lab-mt-3">
+                    <div class="lab-divider"></div>
+                    <h3 class="lab-subtitle">Test Results</h3>
+                    
+                    <ul class="nav nav-tabs" id="resultsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="original-tab" data-bs-toggle="tab" data-bs-target="#original" type="button" role="tab">Original</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="obfuscated-tab" data-bs-toggle="tab" data-bs-target="#obfuscated" type="button" role="tab">Obfuscated</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="comparison-tab" data-bs-toggle="tab" data-bs-target="#comparison" type="button" role="tab">Side-by-Side Comparison</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content p-3 border border-top-0 rounded-bottom" id="resultsTabContent" style="border-color: rgba(255, 255, 255, 0.1);">
+                        <div class="tab-pane fade show active" id="original" role="tabpanel">
+                            <h4 class="lab-mb-2">Original Prompt</h4>
+                            <div class="json-display lab-mb-3" id="originalPrompt"></div>
+                            
+                            <h4 class="lab-mb-2">Original Response</h4>
+                            <div class="json-display" id="originalResponse"></div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="obfuscated" role="tabpanel">
+                            <h4 class="lab-mb-2">Obfuscated Prompt</h4>
+                            <div class="json-display lab-mb-3" id="obfuscatedPrompt"></div>
+                            
+                            <h4 class="lab-mb-2">Obfuscated Response</h4>
+                            <div class="json-display" id="obfuscatedResponse"></div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="comparison" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4 class="lab-mb-2">Original Response</h4>
+                                    <div class="json-display" id="comparisonOriginal"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4 class="lab-mb-2">Obfuscated Response</h4>
+                                    <div class="json-display" id="comparisonObfuscated"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Self Test Results Section -->
+                <div id="selfTestResults" style="display: none;" class="lab-mt-3">
+                    <div class="lab-divider"></div>
+                    <h3 class="lab-subtitle">Self Test Results</h3>
+                    
+                    <div id="testSummary"></div>
+                    <div id="encodingTests"></div>
+                    <div id="demonstrationsResults"></div>
+                    <div id="performanceResults"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row lab-mt-3">
+    <div class="col-12">
+        <div class="lab-card lab-fade-in" style="animation-delay: 0.2s;">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span>About Token Manipulation</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <p>
+                    Token manipulation techniques are essential methods for red teaming language models. They exploit how models process and tokenize input text, which can sometimes bypass content filters or safety mechanisms.
+                </p>
+                
+                <p>
+                    The techniques available in this module include:
+                </p>
+                
+                <ul>
+                    <li><strong>Base64 Encoding</strong>: Converts text to Base64, which can obscure sensitive terms while remaining decodable by models.</li>
+                    <li><strong>Character Swapping</strong>: Replaces letters with visually similar characters (e.g., 'a' → '4'), making terms less recognizable to pattern-matching safety systems.</li>
+                    <li><strong>Homoglyph Substitution</strong>: Uses Unicode characters that look identical or very similar to standard ASCII characters.</li>
+                    <li><strong>Zero-Width Space Insertion</strong>: Places invisible characters between letters, breaking up words into separate tokens while maintaining readability.</li>
+                </ul>
+                
+                <div class="lab-text-muted mt-3">
+                    <strong>Note:</strong> These techniques are provided for educational and testing purposes. The goal is to improve model safety by understanding vulnerabilities.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    document.getElementById('obfuscationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get form values
+        const systemPrompt = document.getElementById('systemPrompt').value;
+        const userPrompt = document.getElementById('userPrompt').value;
+        
+        // Get selected techniques
+        const techniques = [];
+        document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+            techniques.push(checkbox.value);
+        });
+        
+        if (!systemPrompt || !userPrompt) {
+            alert('Please enter both system prompt and user prompt.');
+            return;
+        }
+        
+        if (techniques.length === 0) {
+            alert('Please select at least one obfuscation technique.');
+            return;
+        }
+        
+        // Show loading indicator
+        document.getElementById('loadingIndicator').style.display = 'block';
+        document.getElementById('resultsSection').style.display = 'none';
+        document.getElementById('selfTestResults').style.display = 'none';
+        
+        try {
+            // Send request to API
+            const response = await axios.post('/api/token-obfuscation/test', {
+                system_prompt: systemPrompt,
+                user_prompt: userPrompt,
+                techniques: techniques
+            });
+            
+            // Process and display results
+            displayResults(response.data);
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while testing obfuscation: ' + (error.response?.data?.error || error.message));
+        } finally {
+            // Hide loading indicator
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    });
+    
+    async function runSelfTests() {
+        // Show loading indicator
+        document.getElementById('loadingIndicator').style.display = 'block';
+        document.getElementById('resultsSection').style.display = 'none';
+        document.getElementById('selfTestResults').style.display = 'none';
+        
+        try {
+            const response = await axios.post('/api/token-obfuscation/self-test');
+            displaySelfTestResults(response.data);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while running self tests: ' + (error.response?.data?.error || error.message));
+        } finally {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    }
+    
+    function displayResults(data) {
+        // Display original prompt
+        document.getElementById('originalPrompt').textContent = JSON.stringify(data.original_prompt, null, 2);
+        
+        // Display original response
+        if (data.original_response.success) {
+            document.getElementById('originalResponse').textContent = data.original_response.content;
+        } else {
+            document.getElementById('originalResponse').textContent = 'Error: ' + data.original_response.error;
+        }
+        
+        // Display obfuscated prompt
+        document.getElementById('obfuscatedPrompt').textContent = JSON.stringify(data.obfuscated_prompt, null, 2);
+        
+        // Display obfuscated response
+        if (data.obfuscated_response.success) {
+            document.getElementById('obfuscatedResponse').textContent = data.obfuscated_response.content;
+        } else {
+            document.getElementById('obfuscatedResponse').textContent = 'Error: ' + data.obfuscated_response.error;
+        }
+        
+        // Set up comparison tab
+        if (data.original_response.success) {
+            document.getElementById('comparisonOriginal').textContent = data.original_response.content;
+        } else {
+            document.getElementById('comparisonOriginal').textContent = 'Error: ' + data.original_response.error;
+        }
+        
+        if (data.obfuscated_response.success) {
+            document.getElementById('comparisonObfuscated').textContent = data.obfuscated_response.content;
+        } else {
+            document.getElementById('comparisonObfuscated').textContent = 'Error: ' + data.obfuscated_response.error;
+        }
+        
+        // Show results section
+        document.getElementById('resultsSection').style.display = 'block';
+    }
+    
+    function displaySelfTestResults(data) {
+        displayTestSummary(data);
+        displayEncodingTests(data.encoding_test);
+        displayDemonstrations(data.demonstrations_test);
+        displayPerformanceResults(data.performance_test);
+        
+        // Show self test results section
+        document.getElementById('selfTestResults').style.display = 'block';
+    }
+    
+    function displayTestSummary(data) {
+        const summary = data.summary;
+        const summaryHtml = `
+            <div class="test-card">
+                <h5>📊 Test Summary</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 mb-0">${summary.total}</div>
+                            <div class="lab-text-muted">Total Tests</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 mb-0 text-success">${summary.passed}</div>
+                            <div class="lab-text-muted">Passed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 mb-0 text-danger">${summary.failed}</div>
+                            <div class="lab-text-muted">Failed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 mb-0">${summary.success_rate}%</div>
+                            <div class="lab-text-muted">Success Rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="test-card ${data.technique_availability.success ? 'test-success' : 'test-failed'}">
+                <h5>🔧 Technique Availability</h5>
+                <p>${data.technique_availability.success ? '✅' : '❌'} 
+                   ${data.technique_availability.available_count}/${data.technique_availability.expected_count} techniques available</p>
+                ${data.technique_availability.missing.length > 0 ? 
+                    `<p class="text-danger">Missing: ${data.technique_availability.missing.join(', ')}</p>` : ''}
+            </div>
+            
+            <div class="test-card ${data.integration_test.success ? 'test-success' : 'test-failed'}">
+                <h5>🔗 Integration Test</h5>
+                <p>${data.integration_test.success ? '✅' : '❌'} 
+                   ${data.integration_test.success ? 'Integration test passed' : 'Integration test failed'}</p>
+                ${data.integration_test.error ? 
+                    `<p class="text-danger">Error: ${data.integration_test.error}</p>` : ''}
+            </div>
+        `;
+        
+        document.getElementById('testSummary').innerHTML = summaryHtml;
+    }
+    
+    function displayEncodingTests(encodingData) {
+        let encodingHtml = '';
+        
+        encodingData.details.forEach(technique => {
+            const successRate = technique.passed + technique.failed > 0 ? 
+                Math.round((technique.passed / (technique.passed + technique.failed)) * 100) : 0;
+            
+            encodingHtml += `
+                <div class="test-card ${technique.failed === 0 ? 'test-success' : 'test-failed'}">
+                    <h5>🔤 ${technique.technique.toUpperCase()}</h5>
+                    <p>
+                        <span class="text-success">${technique.passed} passed</span> / 
+                        <span class="text-danger">${technique.failed} failed</span> 
+                        (${successRate}% success rate)
+                    </p>
+                    <div class="mt-2">
+                        ${technique.tests.slice(0, 3).map(test => `
+                            <div class="small ${test.success ? 'text-success' : 'text-danger'} mb-1">
+                                ${test.success ? '✅' : '❌'} "${test.input}" → "${test.encoded.substring(0, 30)}${test.encoded.length > 30 ? '...' : ''}"
+                                ${test.error ? `<br><span class="text-danger">Error: ${test.error}</span>` : ''}
+                            </div>
+                        `).join('')}
+                        ${technique.tests.length > 3 ? `<div class="small lab-text-muted">... and ${technique.tests.length - 3} more tests</div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        document.getElementById('encodingTests').innerHTML = encodingHtml;
+    }
+    
+    function displayDemonstrations(demonstrationData) {
+        let demoHtml = `
+            <div class="test-card">
+                <h5>🎭 Technique Demonstrations</h5>
+                <p><strong>Original text:</strong> "${demonstrationData.original_text}"</p>
+                <div class="mt-3">
+        `;
+        
+        demonstrationData.demonstrations.forEach(demo => {
+            demoHtml += `
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>${demo.technique}:</strong>
+                        <span class="${demo.success ? 'text-success' : 'text-danger'}">
+                            ${demo.success ? '✅' : '❌'}
+                        </span>
+                    </div>
+                    <div class="json-display mt-1" style="max-height: 100px; font-size: 0.8rem;">
+                        ${demo.encoded}
+                    </div>
+                </div>
+            `;
+        });
+        
+        demoHtml += `
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('demonstrationsResults').innerHTML = demoHtml;
+    }
+    
+    function displayPerformanceResults(performanceData) {
+        let perfHtml = `
+            <div class="test-card">
+                <h5>⚡ Performance Benchmark</h5>
+                <p><strong>Test text length:</strong> ${performanceData.test_text_length} characters</p>
+                <div class="performance-chart mt-3">
+        `;
+        
+        performanceData.benchmarks.forEach(benchmark => {
+            perfHtml += `
+                <div class="performance-item ${benchmark.success ? 'test-success' : 'test-failed'}">
+                    <div class="h6 mb-2">${benchmark.technique.toUpperCase()}</div>
+                    ${benchmark.success ? `
+                        <div class="mb-1">
+                            <div class="h5 mb-0">${benchmark.encoding_time_ms}ms</div>
+                            <div class="small lab-text-muted">Encoding Time</div>
+                        </div>
+                        <div>
+                            <div class="h5 mb-0">${benchmark.expansion_ratio}x</div>
+                            <div class="small lab-text-muted">Size Expansion</div>
+                        </div>
+                    ` : `
+                        <div class="text-danger">
+                            <div class="h6">❌ Error</div>
+                            <div class="small">${benchmark.error || 'Unknown error'}</div>
+                        </div>
+                    `}
+                </div>
+            `;
+        });
+        
+        perfHtml += `
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('performanceResults').innerHTML = perfHtml;
+    }
+</script>
+{% endblock %}

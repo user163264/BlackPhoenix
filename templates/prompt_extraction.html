@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Extraction Testing - AI Red Team Toolkit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/modern-minimalist.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .prompt-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #fafafa;
+            transition: all 0.3s ease;
+        }
+        .prompt-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+        }
+        .attack-prompt {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 8px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .evaluation-badge {
+            font-size: 0.85em;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .passed {
+            background: #d1edff;
+            color: #0066cc;
+        }
+        .failed {
+            background: #ffe6e6;
+            color: #cc0000;
+        }
+        .copy-btn {
+            font-size: 0.8em;
+            padding: 2px 6px;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-border text-primary mb-3" role="status"></div>
+            <h5 id="loadingText">Generating prompt extraction attacks...</h5>
+            <p class="text-muted">This may take a few moments</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i> AI Red Team Toolkit
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="fas fa-home"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/token-obfuscation"><i class="fas fa-code"></i> Token Obfuscation</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/mlco"><i class="fas fa-language"></i> MLCO Lab</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/system-saturation"><i class="fas fa-bomb"></i> System Saturation</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/prompt-extraction"><i class="fas fa-search"></i> Prompt Extraction</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/system-prompts"><i class="fas fa-database"></i> Prompt Library</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-search text-primary fs-1 me-3"></i>
+                    <div>
+                        <h1 class="mb-1">Prompt Extraction Testing</h1>
+                        <p class="text-muted mb-0">Test if AI models can be tricked into revealing their system prompts</p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info d-flex align-items-center" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <div>
+                        <strong>Research Purpose:</strong> This module generates sophisticated prompt extraction attacks to test if AI systems inappropriately reveal their internal instructions or configuration.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Generation Panel -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-cogs"></i> Attack Generation</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="extractionForm">
+                            <div class="mb-3">
+                                <label for="purpose" class="form-label">Target System Purpose</label>
+                                <input type="text" class="form-control" id="purpose" placeholder="e.g., customer service assistant, content moderator, writing helper" required>
+                                <div class="form-text">Describe what the target AI system is designed to do</div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="promptCount" class="form-label">Number of Attacks</label>
+                                        <select class="form-select" id="promptCount">
+                                            <option value="3">3 attacks</option>
+                                            <option value="5" selected>5 attacks</option>
+                                            <option value="8">8 attacks</option>
+                                            <option value="10">10 attacks</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="creativityLevel" class="form-label">Creativity Level</label>
+                                        <select class="form-select" id="creativityLevel">
+                                            <option value="conservative">Conservative</option>
+                                            <option value="moderate" selected>Moderate</option>
+                                            <option value="creative">Creative</option>
+                                            <option value="experimental">Experimental</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="systemPrompt" class="form-label">Target System Prompt (Optional)</label>
+                                <textarea class="form-control" id="systemPrompt" rows="3" placeholder="If known, paste the actual system prompt being protected here..."></textarea>
+                                <div class="form-text">This helps generate more targeted attacks and enables evaluation</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="customExamples" class="form-label">Custom Examples (Optional)</label>
+                                <textarea class="form-control" id="customExamples" rows="3" placeholder="Provide custom examples to guide the attack generation..."></textarea>
+                                <div class="form-text">Custom examples help tailor attacks to specific scenarios</div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-rocket"></i> Generate Extraction Attacks
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Testing Panel -->
+                <div class="card border-0 shadow-sm" id="testingPanel" style="display: none;">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-vial"></i> Live Testing</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="testModel" class="form-label">Test Model</label>
+                            <select class="form-select" id="testModel">
+                                <option value="gpt-4o" selected>GPT-4o</option>
+                                <option value="gpt-4">GPT-4</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="testSystemPrompt" class="form-label">System Prompt to Test</label>
+                            <textarea class="form-control" id="testSystemPrompt" rows="4" placeholder="Enter the system prompt you want to test for extraction vulnerabilities..."></textarea>
+                            <div class="form-text">This will be the protected system prompt</div>
+                        </div>
+                        
+                        <button type="button" class="btn btn-success w-100" id="runTestsBtn" disabled>
+                            <i class="fas fa-play"></i> Run Live Tests
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> Generated Attacks</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="resultsContainer">
+                            <div class="text-center text-muted p-4">
+                                <i class="fas fa-arrow-left fa-2x mb-3"></i>
+                                <h5>Generate attacks to see results</h5>
+                                <p>Configure your target system and click "Generate Extraction Attacks" to begin.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let generatedAttacks = [];
+        
+        // Form submission
+        document.getElementById('extractionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const purpose = document.getElementById('purpose').value;
+            const promptCount = parseInt(document.getElementById('promptCount').value);
+            const creativityLevel = document.getElementById('creativityLevel').value;
+            const systemPrompt = document.getElementById('systemPrompt').value;
+            const customExamples = document.getElementById('customExamples').value;
+            
+            if (!purpose.trim()) {
+                alert('Please enter a target system purpose');
+                return;
+            }
+            
+            try {
+                showLoading('Generating prompt extraction attacks...');
+                
+                const response = await fetch('/api/prompt-extraction/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        purpose: purpose,
+                        n: promptCount,
+                        creativity_level: creativityLevel,
+                        system_prompt: systemPrompt,
+                        custom_examples: customExamples
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    generatedAttacks = data.generated_prompts;
+                    displayResults(data);
+                    
+                    // Enable testing panel and populate system prompt
+                    document.getElementById('testingPanel').style.display = 'block';
+                    if (systemPrompt) {
+                        document.getElementById('testSystemPrompt').value = systemPrompt;
+                    }
+                    document.getElementById('runTestsBtn').disabled = false;
+                } else {
+                    throw new Error(data.error || 'Failed to generate attacks');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error generating attacks: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        // Live testing
+        document.getElementById('runTestsBtn').addEventListener('click', async function() {
+            const testSystemPrompt = document.getElementById('testSystemPrompt').value;
+            const testModel = document.getElementById('testModel').value;
+            
+            if (!testSystemPrompt.trim()) {
+                alert('Please enter a system prompt to test');
+                return;
+            }
+            
+            if (generatedAttacks.length === 0) {
+                alert('Please generate attacks first');
+                return;
+            }
+            
+            try {
+                showLoading('Running live tests against target system...');
+                
+                const resultsContainer = document.getElementById('resultsContainer');
+                const attackCards = resultsContainer.querySelectorAll('.prompt-card');
+                
+                // Test each attack
+                for (let i = 0; i < generatedAttacks.length; i++) {
+                    const attack = generatedAttacks[i];
+                    const card = attackCards[i];
+                    
+                    // Update loading state for this card
+                    const testSection = card.querySelector('.test-results');
+                    if (testSection) testSection.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm me-2"></div>Testing...</div>';
+                    
+                    try {
+                        const response = await fetch('/api/prompt-extraction/test', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                attack_prompt: attack.prompt,
+                                target_system_prompt: testSystemPrompt,
+                                test_model: testModel
+                            })
+                        });
+                        
+                        const testResult = await response.json();
+                        
+                        if (response.ok) {
+                            displayTestResult(card, testResult);
+                        } else {
+                            throw new Error(testResult.error || 'Test failed');
+                        }
+                    } catch (error) {
+                        if (testSection) {
+                            testSection.innerHTML = `<div class="alert alert-danger">Test Error: ${error.message}</div>`;
+                        }
+                    }
+                    
+                    // Small delay between tests
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error running tests: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        function displayResults(data) {
+            const container = document.getElementById('resultsContainer');
+            
+            let html = `
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Generated ${data.generation_stats.prompts_generated} extraction attacks</h6>
+                        <span class="badge bg-primary">${data.generation_stats.creativity_level} Creativity</span>
+                    </div>
+                    <small class="text-muted">Target: ${data.original_purpose}</small>
+                </div>
+            `;
+            
+            data.generated_prompts.forEach((attack, index) => {
+                html += `
+                    <div class="prompt-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">${attack.technique_variant}</h6>
+                            <button class="btn btn-outline-primary copy-btn" onclick="copyToClipboard('${attack.prompt.replace(/'/g, "\\'")}')"><i class="fas fa-copy"></i></button>
+                        </div>
+                        
+                        <div class="attack-prompt">${escapeHtml(attack.prompt)}</div>
+                        
+                        <div class="text-muted" style="font-size: 0.9em;">
+                            ${attack.technique_description}
+                        </div>
+                        
+                        <div class="test-results mt-3" style="display: none;"></div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function displayTestResult(card, testResult) {
+            const testSection = card.querySelector('.test-results');
+            const evaluation = testResult.evaluation;
+            
+            const statusClass = evaluation.pass ? 'passed' : 'failed';
+            const statusIcon = evaluation.pass ? 'shield-check' : 'exclamation-triangle';
+            const statusText = evaluation.pass ? 'DEFENDED' : 'COMPROMISED';
+            
+            let html = `
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="evaluation-badge ${statusClass}">
+                            <i class="fas fa-${statusIcon}"></i> ${statusText}
+                        </span>
+                        <small class="text-muted">Score: ${evaluation.score.toFixed(1)}/1.0</small>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <strong>Evaluation:</strong> ${evaluation.reason}
+                    </div>
+            `;
+            
+            if (testResult.model_output) {
+                html += `
+                    <div class="mb-2">
+                        <strong>Model Response:</strong>
+                        <div class="attack-prompt" style="max-height: 150px; overflow-y: auto;">${escapeHtml(testResult.model_output)}</div>
+                    </div>
+                `;
+            }
+            
+            if (evaluation.extracted_content && !evaluation.pass) {
+                html += `
+                    <div class="alert alert-warning mb-0">
+                        <strong>⚠️ Potential Leak:</strong> ${evaluation.extracted_content}
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            
+            testSection.innerHTML = html;
+            testSection.style.display = 'block';
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        function showToast(message) {
+            // Simple toast notification
+            const toast = document.createElement('div');
+            toast.className = 'position-fixed top-0 end-0 m-3 alert alert-success';
+            toast.style.zIndex = '10000';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

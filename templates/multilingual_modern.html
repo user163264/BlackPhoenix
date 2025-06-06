@@ -1,0 +1,423 @@
+{% extends "modern_laboratory_base.html" %}
+
+{% set active_page = 'mlco' %}
+
+{% block title %}Multilingual Chain Obfuscation - AI Red Teaming Laboratory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .json-display {
+        background-color: var(--lab-bg-dark);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-md);
+        overflow: auto;
+        max-height: 400px;
+        white-space: pre-wrap;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.85rem;
+        color: var(--lab-text-primary);
+        border-left: 2px solid var(--lab-mlco);
+    }
+    .loading {
+        display: none;
+        text-align: center;
+        margin: var(--lab-space-lg) 0;
+    }
+    .loading-spinner {
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid var(--lab-mlco);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .translation-chain {
+        margin-bottom: var(--lab-space-lg);
+    }
+    .translation-step {
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-md);
+        margin-bottom: var(--lab-space-sm);
+        background-color: var(--lab-bg-light);
+    }
+    .language-badge {
+        font-weight: 500;
+        margin-bottom: var(--lab-space-xs);
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: var(--lab-border-radius);
+        color: var(--lab-text-primary);
+        background-color: rgba(76, 201, 240, 0.2);
+        font-size: 0.8rem;
+    }
+    .language-controls {
+        display: flex;
+        align-items: center;
+        background-color: var(--lab-bg-light);
+        border-radius: var(--lab-border-radius);
+        padding: var(--lab-space-sm);
+        margin-bottom: var(--lab-space-sm);
+    }
+    .remove-language {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row lab-fade-in">
+    <div class="col-12">
+        <h1 class="lab-title">Multilingual Chain Obfuscation</h1>
+        <p class="lab-text-secondary mb-4">Test how translating prompts through multiple languages affects model behavior</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="lab-card module-mlco">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-translate me-2"></i>
+                    <span>Multilingual Chain Configuration</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <p>This tool allows you to test how translating prompts through a chain of different languages affects model responses. The prompt will be translated through each language in sequence and then back to the original language.</p>
+                
+                <form id="multilingualForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="lab-form-group">
+                                <label for="systemPrompt" class="lab-label">System Prompt</label>
+                                <textarea class="lab-textarea" id="systemPrompt" rows="4" placeholder="Enter system prompt here..."></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="lab-form-group">
+                                <label for="userPrompt" class="lab-label">User Prompt</label>
+                                <textarea class="lab-textarea" id="userPrompt" rows="4" placeholder="Enter user prompt here..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="lab-form-group">
+                        <label class="lab-label">Language Chain</label>
+                        <p class="lab-text-muted">Select languages to translate through (in order)</p>
+                        
+                        <div id="languageChain" class="mb-3">
+                            <div class="language-controls">
+                                <select class="lab-select language-select me-2">
+                                    {% for code, name in languages.items() %}
+                                    <option value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="lab-btn lab-btn-sm lab-btn-danger remove-language" disabled>×</button>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="addLanguage" class="lab-btn lab-btn-sm lab-btn-outline">
+                            <i class="bi bi-plus-circle lab-btn-icon"></i> Add Language
+                        </button>
+                    </div>
+                    
+                    <div class="lab-mt-3">
+                        <button type="submit" class="lab-btn lab-btn-primary">
+                            <i class="bi bi-play-fill lab-btn-icon"></i> Test Multilingual Chain
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="loading" id="loadingIndicator">
+                    <div class="loading-spinner"></div>
+                    <p class="lab-mt-2 lab-text-secondary">Testing multilingual chain translation...</p>
+                </div>
+                
+                <div id="resultsSection" style="display: none;" class="lab-mt-3">
+                    <div class="lab-divider"></div>
+                    <h3 class="lab-subtitle">Test Results</h3>
+                    
+                    <ul class="nav nav-tabs" id="resultsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="original-tab" data-bs-toggle="tab" data-bs-target="#original" type="button" role="tab">Original vs Final</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="system-chain-tab" data-bs-toggle="tab" data-bs-target="#system-chain" type="button" role="tab">System Translation Chain</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="user-chain-tab" data-bs-toggle="tab" data-bs-target="#user-chain" type="button" role="tab">User Translation Chain</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content p-3 border border-top-0 rounded-bottom" id="resultsTabContent" style="border-color: rgba(255, 255, 255, 0.1);">
+                        <div class="tab-pane fade show active" id="original" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4 class="lab-mb-2">Original Response</h4>
+                                    <div class="json-display" id="originalResponse"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4 class="lab-mb-2">Translated Response</h4>
+                                    <div class="json-display" id="translatedResponse"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="system-chain" role="tabpanel">
+                            <h4 class="lab-mb-2">System Prompt Translation Chain</h4>
+                            <div id="systemChain" class="translation-chain"></div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="user-chain" role="tabpanel">
+                            <h4 class="lab-mb-2">User Prompt Translation Chain</h4>
+                            <div id="userChain" class="translation-chain"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row lab-mt-3">
+    <div class="col-12">
+        <div class="lab-card lab-fade-in" style="animation-delay: 0.2s;">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span>About Multilingual Chain Obfuscation</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <p>
+                    Multilingual Chain Obfuscation (MLCO) is a technique that uses multiple language translations to subtly alter the meaning or intent of prompts. This technique exploits the imperfect nature of translation to create variations that may bypass content filters while preserving the core intent.
+                </p>
+                
+                <p>
+                    Key aspects of this technique include:
+                </p>
+                
+                <ul>
+                    <li><strong>Semantic Drift</strong>: Each translation introduces small shifts in meaning that can accumulate across the chain</li>
+                    <li><strong>Structure Transformation</strong>: Grammatical structures change when moving between languages with different syntax</li>
+                    <li><strong>Vocabulary Substitution</strong>: Words with slightly different connotations may be swapped during translation</li>
+                    <li><strong>Cultural Context Shifts</strong>: Cultural associations that vary between languages can alter subtext</li>
+                </ul>
+                
+                <div class="lab-text-muted mt-3">
+                    <strong>Note:</strong> For best results, use languages with substantially different linguistic roots (e.g., English → Japanese → Arabic → English) rather than closely related languages.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add/remove language functions
+    document.getElementById('addLanguage').addEventListener('click', function() {
+        const languageChainDiv = document.getElementById('languageChain');
+        
+        // Clone the first language select
+        const firstSelect = document.querySelector('.language-select');
+        
+        const languageDiv = document.createElement('div');
+        languageDiv.className = 'language-controls';
+        
+        const select = document.createElement('select');
+        select.className = 'lab-select language-select me-2';
+        select.innerHTML = firstSelect.innerHTML;
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'lab-btn lab-btn-sm lab-btn-danger remove-language';
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', function() {
+            languageChainDiv.removeChild(languageDiv);
+            updateRemoveButtons();
+        });
+        
+        languageDiv.appendChild(select);
+        languageDiv.appendChild(removeBtn);
+        languageChainDiv.appendChild(languageDiv);
+        
+        updateRemoveButtons();
+    });
+    
+    function updateRemoveButtons() {
+        const removeButtons = document.querySelectorAll('.remove-language');
+        
+        // If there's only one language, disable the remove button
+        if (removeButtons.length === 1) {
+            removeButtons[0].disabled = true;
+        } else {
+            // Enable all remove buttons
+            removeButtons.forEach(button => {
+                button.disabled = false;
+            });
+        }
+    }
+    
+    // Form submission
+    document.getElementById('multilingualForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get form values
+        const systemPrompt = document.getElementById('systemPrompt').value;
+        const userPrompt = document.getElementById('userPrompt').value;
+        
+        // Get selected language chain
+        const languageChain = [];
+        document.querySelectorAll('.language-select').forEach(select => {
+            languageChain.push(select.value);
+        });
+        
+        if (!systemPrompt || !userPrompt) {
+            alert('Please enter both system prompt and user prompt.');
+            return;
+        }
+        
+        if (languageChain.length === 0) {
+            alert('Please add at least one language to the chain.');
+            return;
+        }
+        
+        // Show loading indicator
+        document.getElementById('loadingIndicator').style.display = 'block';
+        document.getElementById('resultsSection').style.display = 'none';
+        
+        try {
+            // Send request to API
+            const response = await axios.post('/api/multilingual/test', {
+                system_prompt: systemPrompt,
+                user_prompt: userPrompt,
+                language_chain: languageChain
+            });
+            
+            // Process and display results
+            displayMultilingualResults(response.data);
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while testing multilingual chain: ' + (error.response?.data?.error || error.message));
+        } finally {
+            // Hide loading indicator
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    });
+    
+    function displayMultilingualResults(data) {
+        // Display original vs translated responses
+        document.getElementById('originalResponse').textContent = data.original_response || 'No response received';
+        document.getElementById('translatedResponse').textContent = data.translated_response || 'No response received';
+        
+        // Display system translation chain if available
+        const systemChainDiv = document.getElementById('systemChain');
+        systemChainDiv.innerHTML = '';
+        
+        if (data.system_translation_chain && data.system_translation_chain.length > 0) {
+            data.system_translation_chain.forEach((step, index) => {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'translation-step';
+                
+                const languageBadge = document.createElement('div');
+                languageBadge.className = 'language-badge';
+                
+                // Get language name from code
+                const languageNames = {
+                    'en': 'English',
+                    'fr': 'French',
+                    'es': 'Spanish',
+                    'de': 'German',
+                    'ru': 'Russian',
+                    'zh': 'Chinese',
+                    'ja': 'Japanese',
+                    'ar': 'Arabic',
+                    'nl': 'Dutch',
+                    'it': 'Italian',
+                    'ko': 'Korean',
+                    'pt': 'Portuguese',
+                    'hi': 'Hindi',
+                    'th': 'Thai',
+                    'tr': 'Turkish',
+                    'vi': 'Vietnamese',
+                    'sv': 'Swedish'
+                };
+                
+                languageBadge.textContent = languageNames[step.language] || step.language;
+                
+                const textDiv = document.createElement('div');
+                textDiv.className = 'translation-text';
+                textDiv.textContent = step.text;
+                
+                stepDiv.appendChild(languageBadge);
+                stepDiv.appendChild(textDiv);
+                systemChainDiv.appendChild(stepDiv);
+            });
+        } else {
+            systemChainDiv.innerHTML = '<p class="lab-text-muted">No system translation chain data available</p>';
+        }
+        
+        // Display user translation chain if available
+        const userChainDiv = document.getElementById('userChain');
+        userChainDiv.innerHTML = '';
+        
+        if (data.user_translation_chain && data.user_translation_chain.length > 0) {
+            data.user_translation_chain.forEach((step, index) => {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'translation-step';
+                
+                const languageBadge = document.createElement('div');
+                languageBadge.className = 'language-badge';
+                
+                // Get language name from code
+                const languageNames = {
+                    'en': 'English',
+                    'fr': 'French',
+                    'es': 'Spanish',
+                    'de': 'German',
+                    'ru': 'Russian',
+                    'zh': 'Chinese',
+                    'ja': 'Japanese',
+                    'ar': 'Arabic',
+                    'nl': 'Dutch',
+                    'it': 'Italian',
+                    'ko': 'Korean',
+                    'pt': 'Portuguese',
+                    'hi': 'Hindi',
+                    'th': 'Thai',
+                    'tr': 'Turkish',
+                    'vi': 'Vietnamese',
+                    'sv': 'Swedish'
+                };
+                
+                languageBadge.textContent = languageNames[step.language] || step.language;
+                
+                const textDiv = document.createElement('div');
+                textDiv.className = 'translation-text';
+                textDiv.textContent = step.text;
+                
+                stepDiv.appendChild(languageBadge);
+                stepDiv.appendChild(textDiv);
+                userChainDiv.appendChild(stepDiv);
+            });
+        } else {
+            userChainDiv.innerHTML = '<p class="lab-text-muted">No user translation chain data available</p>';
+        }
+        
+        // Show results section
+        document.getElementById('resultsSection').style.display = 'block';
+    }
+</script>
+{% endblock %}

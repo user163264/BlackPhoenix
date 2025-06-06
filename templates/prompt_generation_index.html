@@ -1,0 +1,203 @@
+{% extends "modern_laboratory_base.html" %}
+
+{% set active_page = 'home' %}
+
+{% block title %}AI Red Team Prompt Generation Toolkit{% endblock %}
+
+{% block content %}
+<div class="row lab-fade-in">
+    <div class="col-12 text-center">
+        <h1 class="lab-title">
+            <i class="bi bi-cpu-fill me-3"></i>
+            AI Red Team Prompt Generation Toolkit
+        </h1>
+        <p class="lab-text-secondary mb-5">Generate sophisticated red team prompts using AI creativity for authorized security research</p>
+    </div>
+</div>
+
+<!-- First Row: 3 Modules -->
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="lab-card module-token lab-fade-in" style="animation-delay: 0.1s;">
+            <div class="lab-card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-code-slash" style="font-size: 3rem; color: var(--lab-token);"></i>
+                </div>
+                <h3 class="lab-subtitle mb-3">Token Obfuscation Generator</h3>
+                <p class="lab-text-secondary mb-4">
+                    Generate prompts with various encoding techniques including Base64, hex, URL encoding, 
+                    character manipulation, and unicode variants. Copy-paste ready for your testing environment.
+                </p>
+                <a href="/token-obfuscation" class="lab-btn">
+                    <i class="bi bi-arrow-right lab-btn-icon"></i>
+                    Generate Prompts
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="lab-card module-system lab-fade-in" style="animation-delay: 0.2s;">
+            <div class="lab-card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-gear-wide-connected" style="font-size: 3rem; color: var(--lab-system);"></i>
+                </div>
+                <h3 class="lab-subtitle mb-3">System Saturation Generator</h3>
+                <p class="lab-text-secondary mb-4">
+                    Generate prompts with noise, repetition, and attention dilution techniques. 
+                    Create sophisticated system prompt saturation attacks for authorized testing.
+                </p>
+                <a href="/system-saturation" class="lab-btn">
+                    <i class="bi bi-arrow-right lab-btn-icon"></i>
+                    Generate Prompts
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="lab-card module-extraction lab-fade-in" style="animation-delay: 0.3s;">
+            <div class="lab-card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-search" style="font-size: 3rem; color: var(--lab-extraction);"></i>
+                </div>
+                <h3 class="lab-subtitle mb-3">Prompt Extraction Testing</h3>
+                <p class="lab-text-secondary mb-4">
+                    Test if AI models can be tricked into revealing their system prompts through 
+                    sophisticated extraction attacks and live vulnerability assessment.
+                </p>
+                <a href="/prompt-extraction" class="lab-btn">
+                    <i class="bi bi-arrow-right lab-btn-icon"></i>
+                    Launch Testing
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Second Row: 3 Modules -->
+<div class="row mt-4">
+    <div class="col-md-4 mb-4">
+        <div class="lab-card module-library lab-fade-in" style="animation-delay: 0.4s;">
+            <div class="lab-card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-collection" style="font-size: 3rem; color: var(--lab-library);"></i>
+                </div>
+                <h3 class="lab-subtitle mb-3">System Prompt Library</h3>
+                <p class="lab-text-secondary mb-4">
+                    Curated collection of research-grade system prompts for red team operations 
+                    with database management and quick overview features.
+                </p>
+                <a href="/system-prompts" class="lab-btn">
+                    <i class="bi bi-arrow-right lab-btn-icon"></i>
+                    Browse Library
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="lab-card module-mlco lab-fade-in" style="animation-delay: 0.5s;">
+            <div class="lab-card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-lightning-charge" style="font-size: 3rem; color: var(--lab-mlco);"></i>
+                </div>
+                <h3 class="lab-subtitle mb-3">Multi-lingual Chain Obfuscation Laboratory</h3>
+                <p class="lab-text-secondary mb-4">
+                    Advanced MLCO Lab with enhanced multilingual obfuscation, chain analysis, 
+                    and sophisticated translation techniques for professional research.
+                </p>
+                <a href="/mlco" class="lab-btn">
+                    <i class="bi bi-arrow-right lab-btn-icon"></i>
+                    Launch Lab
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="lab-card module-fingerprinting lab-fade-in" style="animation-delay: 0.6s;">
+            <div class="lab-card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-fingerprint" style="font-size: 3rem; color: var(--lab-fingerprinting);"></i>
+                </div>
+                <h3 class="lab-subtitle mb-3">AI Model Fingerprinting Suite</h3>
+                <p class="lab-text-secondary mb-4">
+                    Advanced AI model analysis and vulnerability assessment through systematic probing, 
+                    knowledge cutoff detection, and training data leakage identification.
+                </p>
+                <a href="/fingerprinting" class="lab-btn">
+                    <i class="bi bi-arrow-right lab-btn-icon"></i>
+                    Launch Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="lab-card lab-fade-in" style="animation-delay: 0.7s;">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span>About This Toolkit</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <p>
+                            This AI Red Team Prompt Generation Toolkit leverages OpenAI's API to create sophisticated 
+                            adversarial prompts for authorized security research. Our tools generate copy-paste ready 
+                            prompts that security researchers can use in their own testing environments.
+                        </p>
+                        
+                        <h5>Key Features:</h5>
+                        <ul>
+                            <li><strong>AI-Powered Generation:</strong> Uses GPT creativity to generate sophisticated prompt variations</li>
+                            <li><strong>Copy-Paste Ready:</strong> All generated prompts are immediately usable in external testing</li>
+                            <li><strong>Multiple Techniques:</strong> Token obfuscation, multilingual chains, and system saturation</li>
+                            <li><strong>Research Focus:</strong> Designed for authorized red team operations and defensive security</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-shield-check me-2"></i>
+                            <strong>Ethical Use:</strong> This toolkit generates prompts for authorized security research only. 
+                            All outputs are intended for defensive red team simulations and vulnerability assessment.
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3" style="background: var(--lab-bg-dark); border-radius: var(--lab-border-radius);">
+                            <h6 class="mb-3">Generation Capabilities</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">Encoding Techniques:</span>
+                                <span class="fw-bold">16+</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">Language Chains:</span>
+                                <span class="fw-bold">17 Languages</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">Generation Tools:</span>
+                                <span class="fw-bold">6 Modules</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="lab-text-secondary">AI-Enhanced:</span>
+                                <span class="fw-bold text-success">✓</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 text-center">
+                            <div class="badge bg-success p-2">
+                                <i class="bi bi-cpu me-1"></i>
+                                Powered by OpenAI GPT
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

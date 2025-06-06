@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Multilingual Chain Obfuscation - AI Red Teaming Toolkit{% endblock %}
+
+{% block extra_css %}
+<style>
+    .json-display {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 15px;
+        overflow: auto;
+        max-height: 400px;
+        white-space: pre-wrap;
+    }
+    .loading {
+        display: none;
+        text-align: center;
+        margin: 20px 0;
+    }
+    .loading-spinner {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #28a745;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .translation-chain {
+        margin-bottom: 20px;
+    }
+    .translation-step {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .language-badge {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 5px;
+        color: white;
+        background-color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h2 class="mb-0">Multilingual Chain Obfuscation</h2>
+            </div>
+            <div class="card-body">
+                <p>This tool allows you to test how translating prompts through a chain of different languages affects model responses. The prompt will be translated through each language in sequence and then back to the original language.</p>
+                
+                <form id="multilingualForm">
+                    <div class="mb-3">
+                        <label for="systemPrompt" class="form-label">System Prompt</label>
+                        <textarea class="form-control" id="systemPrompt" rows="4" placeholder="Enter system prompt here..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userPrompt" class="form-label">User Prompt</label>
+                        <textarea class="form-control" id="userPrompt" rows="4" placeholder="Enter user prompt here..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Language Chain</label>
+                        <p class="text-muted">Select languages to translate through (in order)</p>
+                        
+                        <div id="languageChain" class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <select class="form-select language-select me-2">
+                                    {% for code, name in languages.items() %}
+                                    <option value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-sm btn-danger remove-language" disabled>×</button>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="addLanguage" class="btn btn-sm btn-success">+ Add Language</button>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">Test Multilingual Chain</button>
+                </form>
+                
+                <div class="loading" id="loadingIndicator">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-2">Testing multilingual chain translation...</p>
+                </div>
+                
+                <div id="resultsSection" style="display: none;" class="mt-4">
+                    <h3>Results</h3>
+                    
+                    <ul class="nav nav-tabs" id="resultsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="original-tab" data-bs-toggle="tab" data-bs-target="#original" type="button" role="tab">Original vs Final</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="system-chain-tab" data-bs-toggle="tab" data-bs-target="#system-chain" type="button" role="tab">System Translation Chain</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="user-chain-tab" data-bs-toggle="tab" data-bs-target="#user-chain" type="button" role="tab">User Translation Chain</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content p-3 border border-top-0 rounded-bottom" id="resultsTabContent">
+                        <div class="tab-pane fade show active" id="original" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4>Original Response</h4>
+                                    <div class="json-display" id="originalResponse"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4>Translated Response</h4>
+                                    <div class="json-display" id="translatedResponse"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="system-chain" role="tabpanel">
+                            <h4>System Prompt Translation Chain</h4>
+                            <div id="systemChain" class="translation-chain"></div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="user-chain" role="tabpanel">
+                            <h4>User Prompt Translation Chain</h4>
+                            <div id="userChain" class="translation-chain"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add/remove language functions
+    document.getElementById('addLanguage').addEventListener('click', function() {
+        const languageChainDiv = document.getElementById('languageChain');
+        
+        // Clone the first language select
+        const firstSelect = document.querySelector('.language-select');
+        
+        const languageDiv = document.createElement('div');
+        languageDiv.className = 'd-flex align-items-center mb-2';
+        
+        const select = document.createElement('select');
+        select.className = 'form-select language-select me-2';
+        select.innerHTML = firstSelect.innerHTML;
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-sm btn-danger remove-language';
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', function() {
+            languageChainDiv.removeChild(languageDiv);
+            updateRemoveButtons();
+        });
+        
+        languageDiv.appendChild(select);
+        languageDiv.appendChild(removeBtn);
+        languageChainDiv.appendChild(languageDiv);
+        
+        updateRemoveButtons();
+    });
+    
+    function updateRemoveButtons() {
+        const removeButtons = document.querySelectorAll('.remove-language');
+        
+        // If there's only one language, disable the remove button
+        if (removeButtons.length === 1) {
+            removeButtons[0].disabled = true;
+        } else {
+            // Enable all remove buttons
+            removeButtons.forEach(button => {
+                button.disabled = false;
+            });
+        }
+    }
+    
+    // Form submission
+    document.getElementById('multilingualForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get form values
+        const systemPrompt = document.getElementById('systemPrompt').value;
+        const userPrompt = document.getElementById('userPrompt').value;
+        
+        // Get selected language chain
+        const languageChain = [];
+        document.querySelectorAll('.language-select').forEach(select => {
+            languageChain.push(select.value);
+        });
+        
+        if (!systemPrompt || !userPrompt) {
+            alert('Please enter both system prompt and user prompt.');
+            return;
+        }
+        
+        if (languageChain.length === 0) {
+            alert('Please add at least one language to the chain.');
+            return;
+        }
+        
+        // Show loading indicator
+        document.getElementById('loadingIndicator').style.display = 'block';
+        document.getElementById('resultsSection').style.display = 'none';
+        
+        try {
+            // Send request to API
+            const response = await axios.post('/api/multilingual/test', {
+                system_prompt: systemPrompt,
+                user_prompt: userPrompt,
+                language_chain: languageChain
+            });
+            
+            // Process and display results
+            displayMultilingualResults(response.data);
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while testing multilingual chain: ' + (error.response?.data?.error || error.message));
+        } finally {
+            // Hide loading indicator
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    });
+    
+    function displayMultilingualResults(data) {
+        // Display original vs translated responses
+        if (data.original.response.success) {
+            document.getElementById('originalResponse').textContent = data.original.response.content;
+        } else {
+            document.getElementById('originalResponse').textContent = 'Error: ' + data.original.response.error;
+        }
+        
+        if (data.translated.response.success) {
+            document.getElementById('translatedResponse').textContent = data.translated.response.content;
+        } else {
+            document.getElementById('translatedResponse').textContent = 'Error: ' + data.translated.response.error;
+        }
+        
+        // Display system translation chain
+        const systemChainDiv = document.getElementById('systemChain');
+        systemChainDiv.innerHTML = '';
+        
+        data.system_translation_chain.forEach((step, index) => {
+            const stepDiv = document.createElement('div');
+            stepDiv.className = 'translation-step';
+            
+            const languageBadge = document.createElement('div');
+            languageBadge.className = 'language-badge';
+            
+            // Get language name from code
+            const languageNames = {
+                'en': 'English',
+                'fr': 'French',
+                'es': 'Spanish',
+                'de': 'German',
+                'ru': 'Russian',
+                'zh': 'Chinese',
+                'ja': 'Japanese',
+                'ar': 'Arabic'
+            };
+            
+            languageBadge.textContent = languageNames[step.language] || step.language;
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'translation-text';
+            textDiv.textContent = step.text;
+            
+            stepDiv.appendChild(languageBadge);
+            stepDiv.appendChild(textDiv);
+            systemChainDiv.appendChild(stepDiv);
+        });
+        
+        // Display user translation chain
+        const userChainDiv = document.getElementById('userChain');
+        userChainDiv.innerHTML = '';
+        
+        data.user_translation_chain.forEach((step, index) => {
+            const stepDiv = document.createElement('div');
+            stepDiv.className = 'translation-step';
+            
+            const languageBadge = document.createElement('div');
+            languageBadge.className = 'language-badge';
+            
+            // Get language name from code
+            const languageNames = {
+                'en': 'English',
+                'fr': 'French',
+                'es': 'Spanish',
+                'de': 'German',
+                'ru': 'Russian',
+                'zh': 'Chinese',
+                'ja': 'Japanese',
+                'ar': 'Arabic'
+            };
+            
+            languageBadge.textContent = languageNames[step.language] || step.language;
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'translation-text';
+            textDiv.textContent = step.text;
+            
+            stepDiv.appendChild(languageBadge);
+            stepDiv.appendChild(textDiv);
+            userChainDiv.appendChild(stepDiv);
+        });
+        
+        // Show results section
+        document.getElementById('resultsSection').style.display = 'block';
+    }
+</script>
+{% endblock %}

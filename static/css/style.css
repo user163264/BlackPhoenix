@@ -1,0 +1,45 @@
+/* Custom styles for the red teaming toolkit */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.card-header h2 {
+    font-size: 1.5rem;
+}
+
+.json-display::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.json-display::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.json-display::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.json-display::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.alert-warning h4 {
+    color: #856404;
+}

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Model Fingerprinting Suite - AI Red Team Toolkit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/modern-minimalist.css') }}" rel="stylesheet">
+    <style>
+        .fingerprint-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .fingerprint-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .scan-option {
+            cursor: pointer;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .scan-option.selected {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color)10%, transparent);
+        }
+        
+        .progress-container { display: none; margin-top: 1rem; }
+        .results-container { display: none; margin-top: 2rem; }
+        
+        .risk-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .risk-low { background: #d4edda; color: #155724; }
+        .risk-medium { background: #fff3cd; color: #856404; }
+        .risk-high { background: #f8d7da; color: #721c24; }
+        .risk-critical { background: #f5c2c7; color: #721c24; }
+        
+        .capability-meter {
+            height: 20px;
+            background: var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+        
+        .capability-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4757, #ffa502, #26de81);
+            transition: width 0.5s ease;
+        }
+        
+        .scan-button {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .scan-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);
+        }
+        
+        .scan-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .test-result {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+        
+        .test-success { border-left: 4px solid #26de81; }
+        .test-warning { border-left: 4px solid #ffa502; }
+        .test-error { border-left: 4px solid #ff4757; }
+        
+        /* Prompt Generation Styles */
+        .prompt-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .prompt-text {
+            background: #2c3e50;
+            color: #ffffff;
+            border: 1px solid #34495e;
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            opacity: 1;
+        }
+        
+        .prompt-container {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .evaluation-tips {
+            background: #34495e;
+            color: #ffffff;
+            border: 1px solid #4a5f7a;
+            border-radius: 6px;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        
+        .mode-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+        }
+        
+        .mode-direct {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .mode-generation {
+            background: #cce5ff;
+            color: #004085;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-fingerprint me-2"></i>AI Model Fingerprinting Suite
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="fas fa-home me-1"></i>Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 text-gradient mb-3">
+                <i class="fas fa-fingerprint me-3"></i>AI Model Fingerprinting Suite
+            </h1>
+            <p class="lead">Comprehensive AI model analysis and vulnerability assessment toolkit</p>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Advanced AI Security Research:</strong> This tool systematically probes AI models to identify capabilities, 
+                        limitations, knowledge boundaries, and potential security vulnerabilities through sophisticated testing methodologies.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan Configuration -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="fingerprint-card">
+                    <h3 class="mb-4"><i class="fas fa-cogs me-2"></i>Fingerprinting Configuration</h3>
+                    
+                    <!-- Operation Mode Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Operation Mode</label>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="scan-option fingerprint-card p-3 selected" data-mode="direct">
+                                    <h5><i class="fas fa-link me-2"></i>Direct API Testing</h5>
+                                    <p class="text-muted mb-0">Direct model analysis using API key for automated testing and real-time results</p>
+                                    <small class="text-primary">Recommended • Automated Analysis</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="scan-option fingerprint-card p-3" data-mode="generation">
+                                    <h5><i class="fas fa-clipboard-list me-2"></i>Prompt Generation</h5>
+                                    <p class="text-muted mb-0">Generate sophisticated fingerprinting prompts for copy-paste manual testing</p>
+                                    <small class="text-success">API-Less • Manual Testing</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Key Input (for Direct Mode) -->
+                    <div id="apiKeySection" class="mb-4">
+                        <label class="form-label">Target Model API Key <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-key"></i></span>
+                            <input type="password" id="apiKeyInput" class="form-control" placeholder="Enter API key for target model...">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleApiKey">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">API key for the model you want to fingerprint (not your OpenAI key)</div>
+                    </div>
+
+                    <!-- Prompt Generation Options (for Generation Mode) -->
+                    <div id="generationOptions" class="mb-4" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Prompts per Category</label>
+                                <select id="promptsPerCategory" class="form-select">
+                                    <option value="3">3 prompts per category</option>
+                                    <option value="5" selected>5 prompts per category</option>
+                                    <option value="10">10 prompts per category</option>
+                                    <option value="15">15 prompts per category</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Creativity Level</label>
+                                <select id="creativityLevel" class="form-select">
+                                    <option value="conservative">Conservative</option>
+                                    <option value="moderate" selected>Moderate</option>
+                                    <option value="creative">Creative</option>
+                                    <option value="experimental">Experimental</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scan Type Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Select Scan Type</label>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="scan-option fingerprint-card p-3 selected" data-scan-type="comprehensive">
+                                    <h5><i class="fas fa-search-plus me-2"></i>Comprehensive Scan</h5>
+                                    <p class="text-muted mb-0">Full fingerprinting analysis including knowledge cutoff detection, capability testing, and data leakage assessment</p>
+                                    <small class="text-primary">Recommended • ~7-10 tests</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="scan-option fingerprint-card p-3" data-scan-type="quick">
+                                    <h5><i class="fas fa-zap me-2"></i>Quick Scan</h5>
+                                    <p class="text-muted mb-0">Essential fingerprinting tests for rapid model identification and basic capability assessment</p>
+                                    <small class="text-success">Fast • ~3-5 tests</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="mb-4">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="includeLeakageTests" checked>
+                            <label class="form-check-label" for="includeLeakageTests">
+                                <i class="fas fa-shield-alt me-2"></i>Include Data Leakage Detection
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="includeCapabilityTests" checked>
+                            <label class="form-check-label" for="includeCapabilityTests">
+                                <i class="fas fa-brain me-2"></i>Include Capability Assessment
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="includeKnowledgeTests" checked>
+                            <label class="form-check-label" for="includeKnowledgeTests">
+                                <i class="fas fa-calendar-alt me-2"></i>Include Knowledge Cutoff Detection
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Start Button -->
+                    <div class="text-center">
+                        <button id="startScanBtn" class="scan-button btn btn-lg">
+                            <i class="fas fa-play me-2"></i><span id="startButtonText">Start Fingerprinting Scan</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generated Prompts Section -->
+        <div id="generatedPromptsSection" class="row" style="display: none;">
+            <div class="col-lg-10 mx-auto">
+                <div class="fingerprint-card">
+                    <h3 class="mb-4"><i class="fas fa-clipboard-list me-2"></i>Generated Fingerprinting Prompts</h3>
+                    
+                    <!-- Usage Instructions -->
+                    <div class="alert alert-info mb-4">
+                        <h6><i class="fas fa-info-circle me-2"></i>How to Use These Prompts:</h6>
+                        <ol class="mb-0">
+                            <li><strong>Copy prompts</strong> using the copy buttons below</li>
+                            <li><strong>Paste into target model</strong> (ChatGPT, Claude, etc.)</li>
+                            <li><strong>Analyze responses</strong> using the evaluation criteria provided</li>
+                            <li><strong>Compare patterns</strong> across different prompts for comprehensive analysis</li>
+                        </ol>
+                    </div>
+
+                    <!-- Knowledge Cutoff Prompts -->
+                    <div class="mb-4">
+                        <h4 class="text-primary mb-3"><i class="fas fa-calendar-alt me-2"></i>Knowledge Cutoff Detection</h4>
+                        <div class="alert alert-light">
+                            <strong>Purpose:</strong> Determine the model's training data cutoff date<br>
+                            <strong>Evaluation:</strong> Look for specific dates, events, or "I don't know" responses
+                        </div>
+                        <div id="knowledgePrompts" class="prompt-container">
+                            <!-- Generated prompts will appear here -->
+                        </div>
+                    </div>
+
+                    <!-- Capability Assessment Prompts -->
+                    <div class="mb-4">
+                        <h4 class="text-success mb-3"><i class="fas fa-brain me-2"></i>Capability Assessment</h4>
+                        <div class="alert alert-light">
+                            <strong>Purpose:</strong> Test model capabilities across language, reasoning, and safety<br>
+                            <strong>Evaluation:</strong> Assess response quality, accuracy, and appropriateness
+                        </div>
+                        <div id="capabilityPrompts" class="prompt-container">
+                            <!-- Generated prompts will appear here -->
+                        </div>
+                    </div>
+
+                    <!-- Data Leakage Detection Prompts -->
+                    <div class="mb-4">
+                        <h4 class="text-warning mb-3"><i class="fas fa-shield-alt me-2"></i>Data Leakage Detection</h4>
+                        <div class="alert alert-light">
+                            <strong>Purpose:</strong> Detect potential training data leakage or privacy violations<br>
+                            <strong>Evaluation:</strong> Check for verbatim content reproduction or personal information exposure
+                        </div>
+                        <div id="leakagePrompts" class="prompt-container">
+                            <!-- Generated prompts will appear here -->
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="text-center mt-4">
+                        <button id="regeneratePromptsBtn" class="btn btn-primary me-3">
+                            <i class="fas fa-redo me-2"></i>Regenerate Prompts
+                        </button>
+                        <button id="copyAllPromptsBtn" class="btn btn-success me-3">
+                            <i class="fas fa-copy me-2"></i>Copy All Prompts
+                        </button>
+                        <button id="exportPromptsBtn" class="btn btn-outline-primary">
+                            <i class="fas fa-download me-2"></i>Export as Text
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <div class="fingerprint-card">
+                        <h4><i class="fas fa-sync-alt me-2"></i>Fingerprinting In Progress</h4>
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div id="scanProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span id="progressText">Initializing scan...</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div id="currentTest" class="mt-2 text-muted">
+                            <i class="fas fa-cog fa-spin me-2"></i>Preparing fingerprinting tests...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-container">
+            <!-- Executive Summary -->
+            <div class="row mb-4">
+                <div class="col-lg-12">
+                    <div class="fingerprint-card">
+                        <h3><i class="fas fa-chart-line me-2"></i>Executive Summary</h3>
+                        <div id="executiveSummary" class="alert alert-info">
+                            <div class="loading-spinner me-2"></div>
+                            Generating comprehensive analysis report...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Findings Grid -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="fingerprint-card text-center">
+                        <h5><i class="fas fa-calendar-alt text-primary me-2"></i>Knowledge Cutoff</h5>
+                        <div id="knowledgeCutoff" class="h4 text-primary">Analyzing...</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="fingerprint-card text-center">
+                        <h5><i class="fas fa-shield-alt text-warning me-2"></i>Security Risk</h5>
+                        <div id="securityRisk" class="h4">
+                            <span class="risk-badge risk-low">Assessing...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="fingerprint-card text-center">
+                        <h5><i class="fas fa-award text-success me-2"></i>Confidence Score</h5>
+                        <div id="confidenceScore" class="h4 text-success">Calculating...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Results -->
+            <div class="row">
+                <!-- Capabilities -->
+                <div class="col-lg-6 mb-4">
+                    <div class="fingerprint-card">
+                        <h4><i class="fas fa-brain me-2"></i>Capabilities Assessment</h4>
+                        <div id="capabilitiesResults">
+                            <div class="text-center p-4">
+                                <div class="loading-spinner me-2"></div>
+                                Analyzing model capabilities...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Findings -->
+                <div class="col-lg-6 mb-4">
+                    <div class="fingerprint-card">
+                        <h4><i class="fas fa-lock me-2"></i>Security Findings</h4>
+                        <div id="securityFindings">
+                            <div class="text-center p-4">
+                                <div class="loading-spinner me-2"></div>
+                                Scanning for vulnerabilities...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="fingerprint-card">
+                        <h4><i class="fas fa-lightbulb me-2"></i>Recommendations</h4>
+                        <div id="recommendations">
+                            <div class="text-center p-4">
+                                <div class="loading-spinner me-2"></div>
+                                Generating actionable recommendations...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <button id="newScanBtn" class="btn btn-primary me-3">
+                        <i class="fas fa-redo me-2"></i>New Scan
+                    </button>
+                    <button id="exportResultsBtn" class="btn btn-success me-3">
+                        <i class="fas fa-download me-2"></i>Export Results
+                    </button>
+                    <button id="viewDetailsBtn" class="btn btn-outline-primary">
+                        <i class="fas fa-eye me-2"></i>View Detailed Results
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentSessionId = null;
+        let scanInProgress = false;
+        let currentMode = 'direct'; // 'direct' or 'generation'
+
+        // Mode selection handling
+        document.querySelectorAll('[data-mode]').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('[data-mode]').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                
+                currentMode = this.dataset.mode;
+                updateInterfaceForMode();
+            });
+        });
+        
+        function updateInterfaceForMode() {
+            const apiKeySection = document.getElementById('apiKeySection');
+            const generationOptions = document.getElementById('generationOptions');
+            const startButtonText = document.getElementById('startButtonText');
+            
+            if (currentMode === 'direct') {
+                apiKeySection.style.display = 'block';
+                generationOptions.style.display = 'none';
+                startButtonText.textContent = 'Start Fingerprinting Scan';
+            } else {
+                apiKeySection.style.display = 'none';
+                generationOptions.style.display = 'block';
+                startButtonText.textContent = 'Generate Fingerprinting Prompts';
+            }
+        }
+        
+        // API Key visibility toggle
+        document.getElementById('toggleApiKey').addEventListener('click', function() {
+            const input = document.getElementById('apiKeyInput');
+            const icon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        });
+
+        // Scan type selection
+        document.querySelectorAll('.scan-option[data-scan-type]').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.scan-option[data-scan-type]').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        // Start scan/generation
+        document.getElementById('startScanBtn').addEventListener('click', async function() {
+            if (scanInProgress) return;
+            
+            if (currentMode === 'direct') {
+                await startDirectScan();
+            } else {
+                await generatePrompts();
+            }
+        });
+        
+        async function startDirectScan() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            
+            if (!apiKey) {
+                alert('Please enter an API key for the target model.');
+                return;
+            }
+            
+            scanInProgress = true;
+            const btn = document.getElementById('startScanBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner me-2"></div>Starting Scan...';
+            
+            // Show progress and results sections
+            document.querySelector('.progress-container').style.display = 'block';
+            document.querySelector('.results-container').style.display = 'block';
+            document.getElementById('generatedPromptsSection').style.display = 'none';
+            
+            // Simulate scan progress for demo
+            updateProgress(0, 'Creating fingerprinting session...');
+            
+            setTimeout(() => {
+                updateProgress(25, 'Running knowledge cutoff tests...');
+            }, 500);
+            
+            setTimeout(() => {
+                updateProgress(50, 'Analyzing model capabilities...');
+            }, 1000);
+            
+            setTimeout(() => {
+                updateProgress(75, 'Checking for data leakage...');
+            }, 1500);
+            
+            setTimeout(() => {
+                updateProgress(100, 'Generating comprehensive report...');
+                showDemoResults();
+                scanInProgress = false;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play me-2"></i><span id="startButtonText">Start Fingerprinting Scan</span>';
+            }, 2500);
+        }
+        
+        async function generatePrompts() {
+            scanInProgress = true;
+            const btn = document.getElementById('startScanBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner me-2"></div>Generating Prompts...';
+            
+            // Hide other sections
+            document.querySelector('.progress-container').style.display = 'none';
+            document.querySelector('.results-container').style.display = 'none';
+            
+            try {
+                const promptsPerCategory = document.getElementById('promptsPerCategory').value;
+                const creativityLevel = document.getElementById('creativityLevel').value;
+                
+                const response = await fetch('/api/fingerprinting/generate-prompts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompts_per_category: parseInt(promptsPerCategory),
+                        creativity_level: creativityLevel
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayGeneratedPrompts(data.prompts);
+                
+            } catch (error) {
+                console.error('Error generating prompts:', error);
+                alert('Error generating prompts. Please try again.');
+            } finally {
+                scanInProgress = false;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-clipboard-list me-2"></i><span id="startButtonText">Generate Fingerprinting Prompts</span>';
+            }
+        }
+
+        function displayGeneratedPrompts(prompts) {
+            // Show the generated prompts section
+            document.getElementById('generatedPromptsSection').style.display = 'block';
+            
+            // Display knowledge cutoff prompts
+            displayPromptCategory('knowledgePrompts', prompts.knowledge_cutoff, 'Knowledge Cutoff');
+            
+            // Display capability prompts
+            displayPromptCategory('capabilityPrompts', prompts.capability_assessment, 'Capability Assessment');
+            
+            // Display leakage prompts
+            displayPromptCategory('leakagePrompts', prompts.data_leakage, 'Data Leakage');
+        }
+        
+        function displayPromptCategory(containerId, categoryPrompts, categoryName) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            categoryPrompts.forEach((promptData, index) => {
+                const promptItem = document.createElement('div');
+                promptItem.className = 'prompt-item';
+                
+                promptItem.innerHTML = `
+                    <button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyPrompt(this)" title="Copy to clipboard">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <h6 class="mb-2">
+                        <i class="fas fa-lightbulb me-2"></i>${categoryName} Prompt ${index + 1}
+                    </h6>
+                    <div class="prompt-text">${promptData.prompt}</div>
+                    <div class="evaluation-tips">
+                        <strong>Evaluation Focus:</strong> ${promptData.evaluation_focus}
+                    </div>
+                `;
+                
+                container.appendChild(promptItem);
+            });
+        }
+        
+        function copyPrompt(button) {
+            const promptText = button.parentElement.querySelector('.prompt-text').textContent;
+            
+            navigator.clipboard.writeText(promptText).then(() => {
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check text-success"></i>';
+                button.classList.remove('btn-outline-primary');
+                button.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-primary');
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy to clipboard');
+                console.error('Copy failed:', err);
+            });
+        }
+        
+        // Action button handlers
+        document.getElementById('regeneratePromptsBtn').addEventListener('click', generatePrompts);
+        
+        document.getElementById('copyAllPromptsBtn').addEventListener('click', function() {
+            const allPrompts = [];
+            document.querySelectorAll('.prompt-text').forEach(promptElement => {
+                allPrompts.push(promptElement.textContent);
+            });
+            
+            const allPromptsText = allPrompts.join('\n\n---\n\n');
+            
+            navigator.clipboard.writeText(allPromptsText).then(() => {
+                const originalHTML = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-check text-success me-2"></i>Copied!';
+                
+                setTimeout(() => {
+                    this.innerHTML = originalHTML;
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy all prompts to clipboard');
+                console.error('Copy failed:', err);
+            });
+        });
+        
+        document.getElementById('exportPromptsBtn').addEventListener('click', function() {
+            const allPrompts = [];
+            const categories = [
+                { id: 'knowledgePrompts', name: 'Knowledge Cutoff Detection' },
+                { id: 'capabilityPrompts', name: 'Capability Assessment' },
+                { id: 'leakagePrompts', name: 'Data Leakage Detection' }
+            ];
+            
+            let exportText = 'AI Model Fingerprinting Prompts\n';
+            exportText += '='.repeat(50) + '\n\n';
+            
+            categories.forEach(category => {
+                const container = document.getElementById(category.id);
+                if (container && container.children.length > 0) {
+                    exportText += `${category.name}\n`;
+                    exportText += '-'.repeat(category.name.length) + '\n\n';
+                    
+                    Array.from(container.children).forEach((item, index) => {
+                        const promptText = item.querySelector('.prompt-text').textContent;
+                        const evaluation = item.querySelector('.evaluation-tips').textContent;
+                        
+                        exportText += `${index + 1}. ${promptText}\n\n`;
+                        exportText += `   ${evaluation}\n\n`;
+                    });
+                    
+                    exportText += '\n';
+                }
+            });
+            
+            // Create and download file
+            const blob = new Blob([exportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fingerprinting_prompts.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        
+        function updateProgress(percent, text) {
+            document.getElementById('scanProgress').style.width = percent + '%';
+            document.getElementById('progressPercent').textContent = Math.round(percent) + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+        
+        function showDemoResults() {
+            // Executive Summary
+            document.getElementById('executiveSummary').innerHTML = `
+                <i class="fas fa-info-circle text-info me-2"></i>
+                <strong>Demo Mode:</strong> 📅 Knowledge Analysis: January 2024 cutoff detected | 🧠 Capabilities: High proficiency across all domains | 🔒 Privacy Status: No data leakage detected | ✅ Security Status: No critical vulnerabilities identified
+            `;
+            document.getElementById('executiveSummary').className = 'alert alert-info';
+            
+            // Knowledge Cutoff
+            document.getElementById('knowledgeCutoff').textContent = 'Around January 2024';
+            
+            // Security Risk
+            document.getElementById('securityRisk').innerHTML = '<span class="risk-badge risk-low">LOW RISK</span>';
+            
+            // Confidence Score
+            document.getElementById('confidenceScore').textContent = '87%';
+            
+            // Capabilities
+            document.getElementById('capabilitiesResults').innerHTML = `
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Language</span>
+                        <span class="text-success">92%</span>
+                    </div>
+                    <div class="capability-meter">
+                        <div class="capability-fill" style="width: 92%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Reasoning</span>
+                        <span class="text-success">88%</span>
+                    </div>
+                    <div class="capability-meter">
+                        <div class="capability-fill" style="width: 88%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Safety</span>
+                        <span class="text-success">95%</span>
+                    </div>
+                    <div class="capability-meter">
+                        <div class="capability-fill" style="width: 95%"></div>
+                    </div>
+                </div>
+            `;
+            
+            // Security Findings
+            document.getElementById('securityFindings').innerHTML = `
+                <div class="test-result test-success">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    No security vulnerabilities detected
+                </div>
+                <div class="mt-3 p-3 bg-light rounded">
+                    <h6>Risk Summary</h6>
+                    <div class="d-flex justify-content-between">
+                        <span>Critical: <span class="risk-badge risk-critical">0</span></span>
+                        <span>High: <span class="risk-badge risk-high">0</span></span>
+                        <span>Medium: <span class="risk-badge risk-medium">0</span></span>
+                        <span>Low: <span class="risk-badge risk-low">2</span></span>
+                    </div>
+                </div>
+            `;
+            
+            // Recommendations
+            document.getElementById('recommendations').innerHTML = `
+                <div class="test-result">
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    ✅ No critical issues detected - maintain current security posture
+                </div>
+                <div class="test-result">
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    🔒 Consider implementing additional privacy protections for enhanced data security
+                </div>
+                <div class="test-result">
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    📊 Regular fingerprinting scans recommended to monitor model changes
+                </div>
+            `;
+        }
+        
+        // Action buttons
+        document.getElementById('newScanBtn').addEventListener('click', function() {
+            location.reload();
+        });
+        
+        document.getElementById('exportResultsBtn').addEventListener('click', function() {
+            alert('Export functionality will be available when fingerprinting integration is complete.');
+        });
+        
+        document.getElementById('viewDetailsBtn').addEventListener('click', function() {
+            alert('Detailed results view will be available when fingerprinting integration is complete.');
+        });
+    </script>
+</body>
+</html>

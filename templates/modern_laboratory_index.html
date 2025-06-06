@@ -1,0 +1,125 @@
+{% extends "modern_laboratory_base.html" %}
+
+{% set active_page = 'home' %}
+
+{% block title %}AI Red Teaming Laboratory{% endblock %}
+
+{% block content %}
+<div class="row lab-fade-in">
+    <div class="col-12 text-center">
+        <h1 class="lab-title">
+            <i class="bi bi-shield-shaded me-3"></i>
+            AI Red Teaming Laboratory
+        </h1>
+        <p class="lab-text-secondary mb-5">Advanced tools for testing AI model robustness and safety mechanisms</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="lab-card module-token lab-fade-in" style="animation-delay: 0.1s;">
+            <div class="lab-card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-shuffle" style="font-size: 3rem; color: var(--lab-token);"></i>
+                </div>
+                <h3 class="lab-subtitle mb-3">Token Obfuscation</h3>
+                <p class="lab-text-secondary mb-4">
+                    Test various token manipulation techniques including Base64 encoding, character swapping, 
+                    homoglyph substitution, and zero-width character insertion.
+                </p>
+                <a href="/token-obfuscation" class="lab-btn">
+                    <i class="bi bi-arrow-right lab-btn-icon"></i>
+                    Launch Module
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="lab-card module-multilingual lab-fade-in" style="animation-delay: 0.2s;">
+            <div class="lab-card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-translate" style="font-size: 3rem; color: var(--lab-multilingual);"></i>
+                </div>
+                <h3 class="lab-subtitle mb-3">Multilingual Chain</h3>
+                <p class="lab-text-secondary mb-4">
+                    Execute multilingual chain obfuscation by translating prompts through multiple languages 
+                    to bypass content filters and safety mechanisms.
+                </p>
+                <a href="/multilingual" class="lab-btn">
+                    <i class="bi bi-arrow-right lab-btn-icon"></i>
+                    Launch Module
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="lab-card module-system lab-fade-in" style="animation-delay: 0.3s;">
+            <div class="lab-card-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-cpu" style="font-size: 3rem; color: var(--lab-system);"></i>
+                </div>
+                <h3 class="lab-subtitle mb-3">System Saturation</h3>
+                <p class="lab-text-secondary mb-4">
+                    Overwhelm system prompts with noise, repetition, and distractions to test 
+                    the model's ability to maintain safety constraints under load.
+                </p>
+                <a href="/system-saturation" class="lab-btn">
+                    <i class="bi bi-arrow-right lab-btn-icon"></i>
+                    Launch Module
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="lab-card lab-fade-in" style="animation-delay: 0.4s;">
+            <div class="lab-card-header">
+                <div class="lab-card-header-title">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span>About This Laboratory</span>
+                </div>
+            </div>
+            <div class="lab-card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <p>
+                            This AI Red Teaming Laboratory provides a comprehensive suite of tools for testing 
+                            the robustness of large language models against various adversarial techniques. 
+                            Our modules are designed for security researchers, AI safety professionals, and 
+                            developers working to improve model alignment and safety.
+                        </p>
+                        
+                        <h5>Research Areas Covered:</h5>
+                        <ul>
+                            <li><strong>Token Manipulation:</strong> Testing how models handle obfuscated inputs through various encoding techniques</li>
+                            <li><strong>Cross-lingual Attacks:</strong> Exploiting translation chains to bypass safety mechanisms</li>
+                            <li><strong>System Prompt Injection:</strong> Evaluating the robustness of system-level instructions</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3" style="background: var(--lab-bg-dark); border-radius: var(--lab-border-radius);">
+                            <h6 class="mb-3">Quick Stats</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">Encoding Techniques:</span>
+                                <span class="fw-bold">16+</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="lab-text-secondary">Languages Supported:</span>
+                                <span class="fw-bold">17</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="lab-text-secondary">Test Modules:</span>
+                                <span class="fw-bold">3</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
