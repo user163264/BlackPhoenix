@@ -44,3 +44,18 @@ tmp/
 # API keys and secrets
 **/openAI_API_key.txt
 **/api_key.txt
+# Development and internal documentation files
+*CHANGELOG*.md
+*COMPLETION*.md
+*HANDOFF*.md
+*MEMORY*.md
+*CONTEXT*.md
+*INSTRUCTIONS*.md
+*SUMMARY*.md
+*DASHBOARD*.md
+*CLEANUP*.sh
+*PREPARATION*.md
+*CHECKLIST*.md
+*.rtf
+memory_file_for_next_chat.md
+session_*.md
