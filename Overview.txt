@@ -62,5 +62,5 @@ Project root dir is: /Users/admin/Documents/redteam-tools
 There is a Python VENV sub dir available.
 
 The API is openAI. 
-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
+[API_KEY_REMOVED_FOR_SECURITY]
 ---------------------------------------------------------------------------------------------------------------------------------------

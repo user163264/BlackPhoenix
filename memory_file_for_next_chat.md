@@ -6,9 +6,9 @@
 **Status**: Needs fixing in SystemSaturator class
 
 ## 📁 Project Structure Summary
-- **Main App**: `/Users/admin/Documents/redteam-tools/app.py`
-- **System Saturator**: `/Users/admin/Documents/redteam-tools/modules/system_saturator.py` ⚠️ (needs fixing)
-- **Template**: `/Users/admin/Documents/redteam-tools/templates/system_saturation.html`
+- **Main App**: `/Users/admin/Documents/BlackPhoenix-redteam-tools/app.py`
+- **System Saturator**: `/Users/admin/Documents/BlackPhoenix-redteam-tools/modules/system_saturator.py` ⚠️ (needs fixing)
+- **Template**: `/Users/admin/Documents/BlackPhoenix-redteam-tools/templates/system_saturation.html`
 - **Runs on**: `localhost:5001`
 
 ## ✅ Working Features

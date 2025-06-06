@@ -386,7 +386,7 @@ if __name__ == '__main__':
     env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
     if not os.path.exists(env_path):
         with open(env_path, 'w') as f:
-            f.write(f"OPENAI_API_KEY=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\n")
+            f.write(f"OPENAI_API_KEY=your_openai_api_key_here\n")
         print(f"Created .env file with API key")
     
     app.run(debug=True, host='localhost', port=5000)

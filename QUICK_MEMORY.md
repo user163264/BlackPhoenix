@@ -307,13 +307,13 @@
 - ✅ **System Status**: All modules now confirmed working correctly  
 
 ## Key File Locations
-- Main app: `/Users/admin/Documents/redteam-tools/app.py` ✅ **ENHANCED WITH v2.0**
-- Database model: `/Users/admin/Documents/redteam-tools/models/prompt.py`
-- Enhanced template: `/Users/admin/Documents/redteam-tools/templates/system_prompts_enhanced.html` ✅ **WORKING**
-- Fixed JavaScript: `/Users/admin/Documents/redteam-tools/static/js/prompt-library.js` ✅ **FIXED**
-- System Saturator: `/Users/admin/Documents/redteam-tools/modules/system_saturator.py` ✅ **TIKTOKEN OPTIONAL**
-- **Fingerprinting Suite**: `/Users/admin/Documents/redteam-tools/modules/fingerprinting_suite.py` ✅ **COMPLETE & READY**
-- **Prompt Generator**: `/Users/admin/Documents/redteam-tools/modules/prompt_generator.py` ✅ **NEW v2.0 COMPLETE**
+- Main app: `/Users/admin/Documents/BlackPhoenix-redteam-tools/app.py` ✅ **ENHANCED WITH v2.0**
+- Database model: `/Users/admin/Documents/BlackPhoenix-redteam-tools/models/prompt.py`
+- Enhanced template: `/Users/admin/Documents/BlackPhoenix-redteam-tools/templates/system_prompts_enhanced.html` ✅ **WORKING**
+- Fixed JavaScript: `/Users/admin/Documents/BlackPhoenix-redteam-tools/static/js/prompt-library.js` ✅ **FIXED**
+- System Saturator: `/Users/admin/Documents/BlackPhoenix-redteam-tools/modules/system_saturator.py` ✅ **TIKTOKEN OPTIONAL**
+- **Fingerprinting Suite**: `/Users/admin/Documents/BlackPhoenix-redteam-tools/modules/fingerprinting_suite.py` ✅ **COMPLETE & READY**
+- **Prompt Generator**: `/Users/admin/Documents/BlackPhoenix-redteam-tools/modules/prompt_generator.py` ✅ **NEW v2.0 COMPLETE**
 - **Promptfoo Repository**: `/Users/admin/Documents/promptfoo` ✅ **ANALYZED**
 - Project runs on: `localhost:5001` ✅ **VERIFIED OPERATIONAL**
 
@@ -366,13 +366,13 @@
 ## Startup Commands (ALL WORKING ✅)
 ### **Quick Start (Recommended):**
 ```bash
-cd /Users/admin/Documents/redteam-tools
+cd /Users/admin/Documents/BlackPhoenix-redteam-tools
 ./quick_start.sh
 ```
 
 ### **Standard Start:**
 ```bash
-cd /Users/admin/Documents/redteam-tools
+cd /Users/admin/Documents/BlackPhoenix-redteam-tools
 source venv/bin/activate
 python app.py
 ```

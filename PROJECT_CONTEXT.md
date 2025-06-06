@@ -1,7 +1,7 @@
 # AI Red Team Toolkit - Project Context
 
 ## Project Overview
-This is a Flask-based web application for generating AI red team prompts for security research. The app generates prompts using OpenAI's API rather than testing them against models.
+BlackPhoenix is a Flask-based web application for generating AI red team prompts for security research. The app generates prompts using OpenAI's API rather than testing them against models.
 
 ## Current Development (May 25, 2025) - FINGERPRINTING MODULE v2.0 ENHANCEMENT 🚀
 **🎯 MAJOR ENHANCEMENT: Dual-Mode Fingerprinting with Prompt Generation Capabilities**
@@ -56,13 +56,13 @@ This is a Flask-based web application for generating AI red team prompts for sec
 
 ### **Technical Resolution Applied:**
 **Files Modified:**
-- ✅ `/Users/admin/Documents/redteam-tools/app.py` - **CRITICAL FIX**: Removed duplicate fingerprinting routes
+- ✅ `/Users/admin/Documents/BlackPhoenix-redteam-tools/app.py` - **CRITICAL FIX**: Removed duplicate fingerprinting routes
   - Eliminated second `@app.route('/fingerprinting')` definition (line ~1266)
   - Removed conflicting API endpoints using `fingerprinting_suite` variable
   - Preserved original fingerprinting implementation with `fingerprinting_available`
   - Maintained all other module routes (Token Obfuscation, MLCO, System Saturation, Prompt Extraction, System Prompts)
-- ✅ `/Users/admin/Documents/redteam-tools/QUICK_MEMORY.md` - **UPDATED**: Complete resolution documentation
-- ✅ `/Users/admin/Documents/redteam-tools/PROJECT_CONTEXT.md` - **UPDATED**: System status and operational readiness
+- ✅ `/Users/admin/Documents/BlackPhoenix-redteam-tools/QUICK_MEMORY.md` - **UPDATED**: Complete resolution documentation
+- ✅ `/Users/admin/Documents/BlackPhoenix-redteam-tools/PROJECT_CONTEXT.md` - **UPDATED**: System status and operational readiness
 
 ### **Preserved Flask Architecture:**
 ```python

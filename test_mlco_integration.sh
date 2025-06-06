@@ -33,7 +33,7 @@ if [ -f "/Users/admin/Documents/redteam-tools/.env" ]; then
     echo "✅ .env file found with API key"
 else
     echo "Creating .env file with API key..."
-    echo "OPENAI_API_KEY=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" > "/Users/admin/Documents/redteam-tools/.env"
+    echo "OPENAI_API_KEY=your_openai_api_key_here" > "/Users/admin/Documents/redteam-tools/.env"
     echo "✅ .env file created with API key"
 fi
 

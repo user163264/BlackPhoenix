@@ -1,10 +1,10 @@
-# Prompt Engineering Laboratory
+# BlackPhoenix Red Team Toolkit
 
 A sophisticated workbench for red teaming language models.
 
 ## Overview
 
-The Prompt Engineering Laboratory is a purpose-built toolkit for developing, testing, and documenting sophisticated red teaming techniques for language models. Unlike standard tools that directly test model behaviors, this laboratory focuses on generating prompts that can be tested against external models, making it ideal for red teaming assignments.
+The BlackPhoenix Red Team Toolkit is a purpose-built toolkit for developing, testing, and documenting sophisticated red teaming techniques for language models. Unlike standard tools that directly test model behaviors, this laboratory focuses on generating prompts that can be tested against external models, making it ideal for red teaming assignments.
 
 ## Key Features
 
